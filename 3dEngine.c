@@ -16,7 +16,7 @@ void cast_ray(int (*map)[10], struct Player* player, int angle, int col, int row
 {
     int mapX, mapY, depthOfField;
     float rayX, rayY, yOffset, xOffset, disT;
-
+    int colour = 1;
 
 
     float rayAngle = angle * (M_PI / 180.0f);
@@ -55,6 +55,7 @@ void cast_ray(int (*map)[10], struct Player* player, int angle, int col, int row
 	    hy = rayY;
 	    disH = dist(player->x, player->y, hx, hy, rayAngle);
 	    depthOfField = 8;
+	    colour = map[mapY][mapX];
 	    //printf("disH: %f\n", disH);
 	} else {
 	    rayX += xOffset;
@@ -92,6 +93,7 @@ void cast_ray(int (*map)[10], struct Player* player, int angle, int col, int row
 	    vy = rayY;
 	    disV = dist(player->x, player->y, vx, vy, rayAngle);
 	    depthOfField = 8;
+	    colour = map[mapY][mapX];
 	    //printf("disV: %f\n", disV);
 	} else {
 	    rayX += xOffset;
@@ -138,7 +140,7 @@ void cast_ray(int (*map)[10], struct Player* player, int angle, int col, int row
     //printf("disT = %f, lineH = %d\n", disT, lineH);
     //printf("%d\n", drawX);
     int lineOffset = (rows / 2) - (lineH >> 1);
-    render_line(drawX, lineOffset, lineH, thing);
+    render_line(drawX, lineOffset, lineH, thing, colour);
     //printf("%f\n", disT);
 
 

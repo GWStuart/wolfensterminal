@@ -13,7 +13,7 @@ void clear_screen();
 /*
 Draw an ASCII vertical line at (x,y) and going down with the specified text
 */
-void render_line(int x, int y, int length, chtype character);
+void render_line(int x, int y, int length, chtype character, int colour);
 
 /*
 Renders a rectangle with the top-left corner at the specified x and y
