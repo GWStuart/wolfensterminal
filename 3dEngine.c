@@ -12,7 +12,7 @@ float dist(float ax, float ay, float bx, float by, float ang) {
 }
 
 
-void cast_ray(int (*map)[10], Player_info* player, int angle, int col, int rows)
+float cast_ray(int (*map)[10], Player_info* player, float angle, int col, int rows)
 {
     int mapX, mapY, depthOfField;
     float rayX, rayY, yOffset, xOffset, disT;
@@ -115,7 +115,7 @@ void cast_ray(int (*map)[10], Player_info* player, int angle, int col, int rows)
 	disT = disH;
 	thing = 'O';
     } else {
-	return;
+	return 0; //NEED TO FIX
     }
 	//printf("%f, %f\n", disH, disV);
 
@@ -142,6 +142,22 @@ void cast_ray(int (*map)[10], Player_info* player, int angle, int col, int rows)
     int lineOffset = (rows / 2) - (lineH >> 1);
     render_line(drawX, lineOffset, lineH, thing, colour);
     //printf("%f\n", disT);
+    return disT;
+}
 
+float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sprite** sprites)
+{
+    float zBuffer[cols];
+    float FOV = 70.0f; // degrees
+    float FOV_RAD = FOV * (M_PI / 180.0f);
 
+    for (int col = 0; col < cols; col++) {
+	float rayAngle = (player->angle - (FOV / 2.0f)) + ((float)col / cols) * FOV;
+	zBuffer[col] = cast_ray(map, player, rayAngle, col, rows);  // Pass exact screen column
+    }
+    for (int spriteNum = 0; spriteNum < 1; spriteNum++) { //NEED TO CHANGE 1 TO THE NUMBER OF SPRITES
+	(*sprites)[spriteNum].distanceToPlayer = 
+	    dist((float)player->x, (float)player->y, (float)(*sprites)[spriteNum].x, (float)(*sprites)[spriteNum].x, 0);
+    }
+    //NEED TO QSORT ARRAY BASED ON DISTANCE FROM PLAYER, FURTHEST AWAY SHOULD BE FIRST
 }

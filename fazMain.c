@@ -6,11 +6,14 @@
 #include "render.h"
 #include "input.h"
 #include "player_info.h"
+#include "sprite.h"
 
 #include <unistd.h>
 #include <math.h>
+#include <stdbool.h>
 
 #define TO_RAD(deg) (deg * (M_PI / 180.0f))
+#define TO_DEG(rad) (rad * (180.0f / M_PI))
 
     int map[10][10] = {
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
@@ -27,6 +30,11 @@
 
 int main()
 {
+    //NEED TO MAKE THIS CODE NOT HARD CODED AND ACTUALLY WORK FOR ALL SCENARIOS
+    Sprite* sprites = malloc(sizeof(Sprite) * 1);
+    sprites[0].x = 8*64;
+    sprites[0].y = 8*64;
+    sprites[0].isAngled = false;
     InputDeviceStuff iDS = open_devices();
     Inputs inputs = {.forward = false,
 	.back = false,
@@ -70,10 +78,7 @@ int main()
 	float FOV = 70.0f; // degrees
 	float FOV_RAD = FOV * (M_PI / 180.0f);
 
-	for (int col = 0; col < cols; col++) {
-	    float rayAngle = (player.angle - (FOV / 2.0f)) + ((float)col / cols) * FOV;
-	    cast_ray(map, &player, rayAngle, col, rows);  // Pass exact screen column
-	}
+	draw_all_stuff(map, &player, cols, rows, &sprites);  // Pass exact screen column
 
 
 //
@@ -109,9 +114,11 @@ int main()
     }
     if (inputs.tLeft) {
 	player.angle--;
+	//player.angle -= TO_DEG((2*M_PI)/300);
     }
     if (inputs.tRight) {
 	player.angle++;
+	//player.angle += TO_DEG((2*M_PI)/300);
     }
     refresh();
     napms(16);
