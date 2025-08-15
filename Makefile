@@ -1,12 +1,19 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic
-LIBS = -lncurses
+LDFLAGS = -lncurses
 
-all: render
+OBJS = render.o
 
-render: render.c
-	$(CC) $(CFLAGS) render.c -o render $(LIBS)
+all: main
+
+main: main.o render.o
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+main.o: main.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+render.o: render.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f main
-
+	rm -f render.o main.o main

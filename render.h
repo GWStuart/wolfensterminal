@@ -1,0 +1,23 @@
+#ifndef RENDER_H
+#define RENDER_H
+
+#include <ncurses.h>
+
+// does some ncurses setup
+// (see render.c for details)
+void setup_screen();
+
+// clear the screen (your probably could've guessed that)
+void clear_screen();
+
+/*
+Draw an ASCII vertical line at (x,y) and going down with the specified text
+*/
+void render_line(int x, int y, int length, chtype character);
+
+/*
+Renders a rectangle with the top-left corner at the specified x and y
+*/
+void render_rect(int x, int y, int length, int width, chtype character);
+
+#endif
