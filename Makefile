@@ -1,19 +1,17 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic
-LDFLAGS = -lncurses
+CFLAGS = -Wall -Wextra -pedantic -std=gnu99 
+LDFLAGS = -lm -lncurses
 
-OBJS = render.o
+.PHONY: all 
+.DEFAULT_GOAL:= all
 
 all: main
 
-main: main.o render.o
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+main: player_info.o render.o
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-main.o: main.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-render.o: render.c
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f render.o main.o main
+	rm -f playerinfo *.o
