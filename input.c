@@ -1,11 +1,13 @@
 #include "input.h"
 
+#define BITMASK_LEN 8 // 8 * 64 = 512 bits
 
 
 
 //CODE MADE BY AI, BUT MODIFIED HEAVILY
 
 InputDeviceStuff open_devices() {
+    unsigned long key_bits[BITMASK_LEN] = {0};
     InputDeviceStuff iDS;
     iDS.epollfd = epoll_create1(0);
     if (iDS.epollfd == -1) {
@@ -47,8 +49,13 @@ InputDeviceStuff open_devices() {
             }
 
             // Check if it's a mouse
-            if (ev_bits[0] & (1 << EV_REL)) {
-                printf("Mouse found and added to epoll: %s (%s)\n", iDS.device_path, name);
+            //if (ev_bits[0] & (1 << EV_REL)) {
+	    if ((ev_bits[0] & (1 << EV_REL)) && (ev_bits[0] & (1 << EV_KEY))) {
+    ioctl(iDS.fd, EVIOCGBIT(EV_KEY, sizeof(key_bits)), key_bits);
+    #define IS_BIT_SET(bit, arr) ((arr[(bit) / (sizeof(long) * 8)] >> ((bit) % (sizeof(long) * 8))) & 1)
+    if (IS_BIT_SET(BTN_LEFT, key_bits)) {
+        // It's likely a mouse
+	printf("Mouse found and added to epoll: %s (%s)\n", iDS.device_path, name);
                 iDS.ev.events = EPOLLIN;
                 iDS.ev.data.fd = iDS.fd;
                 if (epoll_ctl(iDS.epollfd, EPOLL_CTL_ADD, iDS.fd, &(iDS.ev)) == -1) {
@@ -58,8 +65,9 @@ InputDeviceStuff open_devices() {
                     (iDS.total_devices_found)++;
                 }
                 continue;
-            }
-            
+    }
+}
+
             close(iDS.fd);
         }
     }
@@ -133,12 +141,13 @@ void detect_input(InputDeviceStuff* iDS, Inputs* inputs)
 		}
 		break;
 	    case EV_REL:
+		//if (input_ev.code == REL_X) {
 		if (input_ev.code == REL_X) {
 		    //printf("Mouse moved horizontally by %d\n", input_ev.value);
 		    inputs->mouseX = input_ev.value;
-		} else if (input_ev.code == REL_Y) {
+		} if (input_ev.code == REL_Y) {
 		    //printf("Mouse moved vertically by %d\n", input_ev.value);
-		} else if (input_ev.code == REL_WHEEL) {
+		} if (input_ev.code == REL_WHEEL) {
 		    //printf("Mouse wheel scrolled by %d\n", input_ev.value);
 		}
 		break;
