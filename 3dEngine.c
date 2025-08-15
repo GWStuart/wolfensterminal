@@ -12,7 +12,7 @@ float dist(float ax, float ay, float bx, float by, float ang) {
 }
 
 
-void cast_ray(int (*map)[10], struct Player* player, int angle, int col, int rows)
+void cast_ray(int (*map)[10], Player_info* player, int angle, int col, int rows)
 {
     int mapX, mapY, depthOfField;
     float rayX, rayY, yOffset, xOffset, disT;

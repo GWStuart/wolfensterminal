@@ -1,6 +1,7 @@
 #ifndef D_ENGINE_H
 #include <math.h>
 #include "render.h"
+#include "player_info.h"
 
 #define D_ENGINE_H
 
@@ -10,7 +11,7 @@ struct Player {
     float angle;
 };
 
-void cast_ray(int (*map)[10], struct Player* player, int angle, int col, int rows);
+void cast_ray(int (*map)[10], Player_info* player, int angle, int col, int rows);
 
 #endif
 

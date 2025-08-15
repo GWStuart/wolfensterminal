@@ -11,13 +11,13 @@
 #define PI 3.14
 
 typedef struct{
-    int position_x;
-    int position_y; 
-    int angle_degrees;
+    int x;
+    int y; 
+    int angle;
     int speed;
 } Player_info;
 
-Player_info* init_player_info(int fazell_angle, int fazell_pos_x, int fazell_pos_y, int fazell_speed);
+Player_info* init_player_info(int fazell_angle, int fazell_pos_x, int fazell_pos_y, float fazell_speed);
 
 void update_player_pos(Player_info* P_info);
 

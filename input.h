@@ -15,8 +15,8 @@
 
 #define K_W 17
 #define K_S 31
-#define K_A 32
-#define K_D 30
+#define K_A 30
+#define K_D 32
 #define K_Q 16
 #define K_E 18
 
