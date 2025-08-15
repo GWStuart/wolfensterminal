@@ -7,7 +7,7 @@ LDFLAGS = -lm -lncurses
 
 all: main
 
-main: player_info.o render.o
+main: player_info.o render.o main.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 %.o: %.c
