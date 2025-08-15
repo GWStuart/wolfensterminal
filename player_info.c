@@ -55,9 +55,3 @@ void deceleration(Player_info* P_info){
         P_info->speed -= 10;
     } 
 }
-
-int main(void){
-    Player_info* P_info = init_player_info(fazell_angle, fazell_pos_x, fazell_pos_y, fazell_speed);
-    update_player_pos(P_info);
-
-}
