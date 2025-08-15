@@ -85,7 +85,7 @@ void detect_input(InputDeviceStuff* iDS, Inputs* inputs)
 {
     //printf("Monitoring all devices simultaneously. Press Ctrl+C to exit.\n");
     
-    iDS->nfds = epoll_wait(iDS->epollfd, iDS->events, MAX_EVENTS, -1);
+    iDS->nfds = epoll_wait(iDS->epollfd, iDS->events, MAX_EVENTS, 5);
     if (iDS->nfds == -1) {
 	if (errno == EINTR) return; // Handle interrupted syscall
 	perror("epoll_wait");
@@ -109,13 +109,19 @@ void detect_input(InputDeviceStuff* iDS, Inputs* inputs)
 			    inputs->forward = true;
 			    break;
 			case K_S:
-			    inputs->forward = true;
+			    inputs->back = true;
 			    break;
 			case K_A:
-			    inputs->forward = true;
+			    inputs->left = true;
 			    break;
 			case K_D:
 			    inputs->right = true;
+			    break;
+			case K_Q:
+			    inputs->tLeft = true;
+			    break;
+			case K_E:
+			    inputs->tRight = true;
 			    break;
 			default: 
 			    break;
@@ -127,13 +133,19 @@ void detect_input(InputDeviceStuff* iDS, Inputs* inputs)
 			    inputs->forward = false;
 			    break;
 			case K_S:
-			    inputs->forward = false;
+			    inputs->back = false;
 			    break;
 			case K_A:
-			    inputs->forward = false;
+			    inputs->left = false;
 			    break;
 			case K_D:
 			    inputs->right = false;
+			    break;
+			case K_Q:
+			    inputs->tLeft = false;
+			    break;
+			case K_E:
+			    inputs->tRight = false;
 			    break;
 			default: 
 			    break;
