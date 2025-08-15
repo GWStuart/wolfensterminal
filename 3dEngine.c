@@ -4,13 +4,15 @@
 #include <stdlib.h>
 
 #define SCR_HEIGHT 30
+#define BL_SHIFT 6
+#define BLOCK_SIZE 64
 
 float dist(float ax, float ay, float bx, float by, float ang) {
     return (sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)));
 }
 
 
-void cast_ray(int (*map)[10], struct Player* player, int angle)
+void cast_ray(int (*map)[10], struct Player* player, int angle, int col, int rows)
 {
     int mapX, mapY, depthOfField;
     float rayX, rayY, yOffset, xOffset, disT;
@@ -97,20 +99,21 @@ void cast_ray(int (*map)[10], struct Player* player, int angle)
 	    depthOfField++;
 	}
     }
-    char thing = '0';
+    char thing = 'Z';
 
     if (disV < disH) {
 	rayX = vx;
 	rayY = vy;
 	disT = disV;
-	thing = '#';
+	thing = 'X';
     } else if (disH < disV) {
     //} else {
 	rayX = hx;
 	rayY = hy;
 	disT = disH;
-	thing = '@';
+	thing = 'O';
     } else {
+	return;
     }
 	//printf("%f, %f\n", disH, disV);
 
@@ -121,19 +124,21 @@ void cast_ray(int (*map)[10], struct Player* player, int angle)
     if (cAngle < -M_PI) cAngle += 2 * M_PI;
 
     disT *= cos(cAngle);
-    int lineH = abs((64 * SCR_HEIGHT) / disT); //REPLACE 44 WITH SCREEN HEIGHT
-    if (lineH > SCR_HEIGHT) {
-	lineH = SCR_HEIGHT;
+    int lineH = abs((64 * rows) / disT); //REPLACE 44 WITH SCREEN HEIGHT
+    if (lineH > rows) {
+	lineH = rows;
     }
     
     //DRAW THE LINE, STARTING AT CORRECT POINT
     //printf("map thing: %d\n", map[0][3]);
-    int drawX = 40 + angle - player->angle;
-    if (drawX > 180) drawX -= 360;
-    if (drawX < -180) drawX += 360;
+    //int drawX = 40 + angle - player->angle;
+//    if (drawX > 180) drawX -= 360;
+//    if (drawX < -180) drawX += 360;
+    int drawX = col;
     //printf("disT = %f, lineH = %d\n", disT, lineH);
     //printf("%d\n", drawX);
-    render_line(drawX, 0, lineH, thing);
+    int lineOffset = (rows / 2) - (lineH >> 1);
+    render_line(drawX, lineOffset, lineH, thing);
     //printf("%f\n", disT);
 
 

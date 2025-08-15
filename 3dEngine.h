@@ -10,7 +10,7 @@ struct Player {
     float angle;
 };
 
-void cast_ray(int (*map)[10], struct Player* player, int angle);
+void cast_ray(int (*map)[10], struct Player* player, int angle, int col, int rows);
 
 #endif
 
