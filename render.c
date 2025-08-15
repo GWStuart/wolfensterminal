@@ -11,10 +11,12 @@ void clear_screen() {
     refresh();
 }
 
-void render_line(int x, int y, int length, chtype character) {
+void render_line(int x, int y, int length, chtype character, int colour) {
+    attron(COLOR_PAIR(colour));
     for (int i=0; i<length; i++) {
         mvaddch(y + i, x, character);
     }
+    attroff(COLOR_PAIR(colour));
 }
 
 void render_rect(int x, int y, int length, int width, chtype character) {
