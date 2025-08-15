@@ -34,6 +34,7 @@ void* handle_data(int sockfd) {
 	if(n>0) {
 	    buffer[n] = '\0';
 	    printf("bumass client sent: %s", buffer);
+	    fflush(stdout);
 	} 
 
 	const char *msg = "deez nuts bumass client";
@@ -72,17 +73,7 @@ int listen_on_port(int port){
     printf("UDP connection on Port 8080\n");
     handle_data(listenfd);
     return listenfd;
-
-
-
    }
-
-void connect_everything(int server) {
-
-        
-
-
-}
 
 
 
@@ -95,9 +86,9 @@ int main(){
 
     //char* port = argv[1];
     // udp: sock_dgram 
-    int server = listen_on_port(PORT);
-    connect_everything(server);
+    listen_on_port(PORT);
     printf("gurt");
+    return 0;
 
 }
     
