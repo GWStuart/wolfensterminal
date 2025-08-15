@@ -1,49 +1,43 @@
 #include <stdio.h>
 #include <unistd.h> // For STDIN_FILENO and read()
 #include <termios.h> // For terminal manipulation
+#include <math.h>
+
+#define MAX_SPEED 100;
+#define MIN_SPEED 1;
+#define PI 3.14;
+
+int stdin_angle = 0; //placeholder, will replace with actual angle given by stdin
 
 typedef struct{
     int postion_x;
     int position_y; 
-    int angle;
+    int angle_degrees;
     int speed;
-} player_info;
+} Player_info;
 
-void read_input(void) {
-    struct termios old_settings, new_settings;
+Player_info* init_player_info(){
+    Player_info* P_info = malloc(sizeof(Player_info));
+    P_info->position_y = 0;
+    P_info->postion_x = 0;
+    P_info->angle_degrees = 0;
+    P_info->speed = 0;
 
-    // 1. Get current terminal settings and save them
-    tcgetattr(STDIN_FILENO, &old_settings);
-    new_settings = old_settings;
+    return P_info;
+}
 
-    // 2. Modify the settings for unbuffered input
-    // ICANON: Disables canonical (line-buffered) mode.
-    // ECHO: Disables echoing the input characters back to the screen.
-    new_settings.c_lflag &= ~(ICANON | ECHO);
+void move_player_direction(Player_info* P_info, int stdin_angle, double distance){
+    P_info->angle_degrees = stdin_angle;
+    double angle_radians = (P_info->angle_degrees) * PI / 180;
+
+    double delta_x = distance*cos(angle_radians);
+    double delta_y = distance*sin(angle_radians);
+
+    P_info->postion_x += delta_x;
+    P_info->position_y += delta_y;
     
-    // 3. Apply the new settings immediately
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_settings);
 
-    printf("Enter characters. Press 'q' to quit.\n");
 
-    char user_input;
-    // 4. Loop to read one character at a time
-    while (1) {
-        // read() is often used here, but fgetc works too
-        user_input = fgetc(stdin);
-
-        if (user_input == 'q') {
-            break;
-        }
-        
-        // We have to manually print the character because ECHO is off
-        printf("You pressed: %c (ASCII: %d)\n", user_input, user_input);
-    }
-
-    // 5. IMPORTANT: Restore the original terminal settings
-    tcsetattr(STDIN_FILENO, TCSANOW, &old_settings);
-
-    printf("\nExiting program.\n");
 }
 
 int main(char** argv, int argc){
