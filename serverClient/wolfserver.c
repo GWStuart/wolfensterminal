@@ -14,34 +14,75 @@
 
 typedef struct { 
     int id;
-    int x, y;
+    int x;
+    int y;
+    float angle;
+    float speed;
+    int health;
+    struct sockaddr_in connection;
 } Player;
 
-
 typedef struct {
-    Player players[MAX_PLAYERS];
-    int maxPlayers;
-} gameState;
+    Player* playerList;
+    int listSize;
+} connectionList;
 
 void* handle_data(int sockfd) {
-    struct sockaddr_in client_addr;
-    socklen_t addr_len = sizeof(client_addr);
-    char buffer[BUFSIZ];
-    printf("gurttt");
+    struct sockaddr_in clientaddr;
+    socklen_t addr_len = sizeof(clientaddr);
+    connectionList players;
+    players.listSize = 0;
 
     while (1) {
-	int n = recvfrom(sockfd, buffer, BUFSIZ, 0, (struct sockaddr*)&client_addr, &addr_len);
+	char buffer[BUFSIZ];
+	int n = recvfrom(sockfd, buffer, BUFSIZ, 0, (struct sockaddr*)&clientaddr, &addr_len);
 	if(n>0) {
-	    buffer[n] = '\0';
-	    printf("bumass client sent: %s", buffer);
-	    fflush(stdout);
-	} 
+	    int playerID = -1;
+	    for(int i = 0; i<players.listSize; i++){
+		if(!memcmp(&players.playerList[i].connection, &clientaddr, sizeof(clientaddr))){
+			playerID = i;
+			break;
+		}
+	    }
+	    if(playerID == -1){
+		players.listSize++;
+		players.playerList = realloc(players.playerList, sizeof(Player)*players.listSize);
+		Player newPlayer = { .id = players.listSize-1, .x = 0, .y = 0, .angle = 0.6, .speed = 6.9, .health = 100, .connection = clientaddr};
+		players.playerList[players.listSize-1] = newPlayer;
+		const char *mapData = "deez nuts bumass client temp mapdata pretend I sent it to you";
+		sendto(sockfd, mapData, strlen(mapData), 0, (struct sockaddr *)&clientaddr, 
+		    addr_len);
 
-	const char *msg = "deez nuts bumass client";
-	sendto(sockfd, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, 
-		addr_len);
-
-
+	    } else if(!strncmp(buffer, "it all over now", 15)){ //player leave game
+		int playerID;  
+		sscanf(buffer, "%d", &playerID);
+		if(playerID != players.listSize-1){
+    		    for(int i = playerID; i<players.listSize-1; i++){
+			players.playerList[i] = players.playerList[i+1];
+		    }
+		}
+		players.listSize--;
+		players.playerList = realloc(players.playerList, sizeof(Player)*players.listSize);
+	    } else {
+		Player updatePlayer = players.playerList[playerID];
+		sscanf(buffer, "%d %d %d %f %f %d", 
+			&updatePlayer.id, &updatePlayer.x, &updatePlayer.y, &updatePlayer.angle, &updatePlayer.speed, &updatePlayer.health);
+	    }
+	    char states[BUFSIZ];
+	    int offset = 0;
+	    for(int i = 0; i < players.listSize; i++){
+		Player currPlayer = players.playerList[i];
+		offset += sprintf(states + offset,
+			"%d %d %d %f",
+			currPlayer.id, currPlayer.x, currPlayer.y, currPlayer.angle);
+	    }
+	    for(int i = 0; i< players.listSize; i++){
+		Player currPlayer = players.playerList[i];
+		sendto(sockfd, states, strlen(states), 0,
+                           (struct sockaddr *)&currPlayer.connection,
+                           sizeof(currPlayer.connection));
+	    }
+	}
     }
     close(sockfd);
     return NULL;

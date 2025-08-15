@@ -25,7 +25,18 @@ int main(){
     sendto(clientFd, yuh, strlen(yuh), 0, (const struct sockaddr *)&servaddr, len);
     int n = recvfrom(clientFd, buffer, BUFSIZ, 0, (struct sockaddr *)&servaddr, &len);
     buffer[n] = '\0';
+    char buf[BUFSIZ];
     printf("Server replied: %s\n", buffer);
+    while(fgets(buf, BUFSIZ, stdin) != NULL){
+	n = recvfrom(clientFd, buffer, BUFSIZ, 0, (struct sockaddr *)&servaddr, &len);
+       if(n>0){
+	   printf("%s", buffer);
+	   fflush(stdout);
+       }	   
+       sendto(clientFd, buf, strlen(buf), 0, (const struct sockaddr *)&servaddr, len);
+	
+    }
+    
     close(clientFd);
     return 0;
 
