@@ -11,6 +11,15 @@
 #include <netdb.h>
 
 #define MAX_PLAYERS 5
+#define CORRECT_PREFIX 0x56561111
+
+typedef struct {
+    uint32_t prefix;
+    uint8_t operation;
+    uint32_t dataSize;
+    uint8_t* data;
+    // come back here, you need to add the part where the id returns when the player is new
+} Message;
 
 typedef struct { 
     int id;
@@ -26,6 +35,46 @@ typedef struct {
     Player* playerList;
     int listSize;
 } connectionList;
+
+int recieve_message(int sockfd, Message *message, struct sockaddr_in *from, 
+	socklen_t *fromlen){
+    uint8_t buffer[BUFSIZ];
+    int n = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)from,
+	    fromlen);
+    if(n < (int)(sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint32_t))){
+	perror("this message has a small member");
+	return -1;
+    }
+    uint32_t prefix = le32toh(*(uint32_t*)(buffer));
+    if(prefix != 0x56561111){
+	perror("the prefix is wrong, this guy is a faker");
+	return -1;
+    }
+
+    message->prefix = prefix;
+    message->operation = le32toh(*(uint8_t*)(buffer + sizeof(uint32_t)));
+    message->dataSize = le32toh(*(uint32_t*)(buffer + sizeof(uint32_t) + sizeof(uint8_t)));
+    if(message->dataSize > n-sizeof(uint8_t)+2*sizeof(uint32_t)){
+	perror("bumass client/server tried to send a file that was too large");
+	return -1;
+    }
+    message->data = malloc(message->dataSize);
+    memcpy(message->data, buffer +sizeof(uint8_t)+2*sizeof(uint32_t), message->dataSize);
+    return 0;
+}
+
+int send_message(int sockfd, struct sockaddr_in *to, socklen_t tolen, uint8_t operation,
+	uint32_t dataSize, uint8_t* data){
+    Message message = {0};
+    message.prefix = htole32(CORRECT_PREFIX);
+    message.operation = operation;
+    message.dataSize = htole32(dataSize);
+    memcpy(message.payload, data, dataSize);
+    return sendto(sockfd, &message,
+                  sizeof(message.prefix) + sizeof(message.operation) +
+                  sizeof(message.dataSize) + dataSize,
+                  0, (struct sockaddr*)to, tolen);
+}
 
 void* handle_data(int sockfd) {
     struct sockaddr_in clientaddr;
