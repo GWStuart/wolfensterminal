@@ -190,7 +190,7 @@ void map_edit(Level *level) {
         {'4', "Enemy", 4},
         {'5', "Gun", 5}, 
         {'6', "Trap", 6}, 
-        {'x', "Player Start", 7}
+        {'X', "Player Start", 7}
     };
     int num_modes = sizeof(modes) / sizeof(modes[0]);
 

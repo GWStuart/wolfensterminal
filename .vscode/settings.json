@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "ncurses.h": "c"
+        "ncurses.h": "c",
+        "stdlib.h": "c",
+        "map_editor.h": "c"
     }
 }

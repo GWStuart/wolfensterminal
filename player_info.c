@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "render.h"
+#include "render_map_editor.h"
 
 #define MAX_SPEED 100
 #define MIN_SPEED 0

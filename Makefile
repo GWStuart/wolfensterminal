@@ -7,7 +7,7 @@ LDFLAGS = -lm -lncurses
 
 all: main
 
-main: player_info.o render.o main.o map_editor.o
+main: player_info.o render_map_editor.o main.o map_editor.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 %.o: %.c

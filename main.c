@@ -1,6 +1,6 @@
 #include <ncurses.h>
 #include "player_info.h"
-#include "render.h"
+#include "render_map_editor.h"
 #include "map_editor.h"
 
 int main() {
