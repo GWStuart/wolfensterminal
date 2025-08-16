@@ -26,7 +26,7 @@ int main() {
 
     Player_info* player = init_player_info(0, 0, 0, 1);
 
-    Level* level = create_level(20, 20);
+    Level* level = create_level(10, 10);
 
     map_edit(level);
 
