@@ -45,6 +45,9 @@ void acceleration(Player_info* player, Inputs* inputs) {
     }
 
     float accel_factor = 0;
+    if (player->curr_speed == target_speed){
+        accel_factor = 1;
+    }
     if(target_speed != 0){
         accel_factor = 1.05; 
     } 
