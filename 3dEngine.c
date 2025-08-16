@@ -5,6 +5,8 @@
 
 #include "debug/debug.h"
 
+#include <unistd.h>
+
 #define SCR_HEIGHT 30
 #define BL_SHIFT 6
 #define BLOCK_SIZE 64
@@ -12,213 +14,361 @@
 #define FOV 70.0f // degrees
 #define FOV_RAD (FOV * (M_PI / 180.0f))
 
+int compar(const void* a, const void* b)
+{
+    Sprite* aS = (Sprite*) a;
+    Sprite* bS = (Sprite*) b;
+    if (aS->distanceToPlayer > bS->distanceToPlayer) {
+	return -1;
+    }
+    else if (aS->distanceToPlayer < bS->distanceToPlayer) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 float dist(float ax, float ay, float bx, float by, float ang) {
     return (sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)));
 }
 
 
+//float cast_ray(int (*map)[10], Player_info* player, float angle, int col, int rows)
+//{
+//    int mapX, mapY, depthOfField;
+//    float rayX, rayY, yOffset, xOffset, disT;
+//    int colour = 1;
+//
+//
+//    float rayAngle = angle * (M_PI / 180.0f);
+//    if (rayAngle > M_PI) rayAngle -= 2 * M_PI;
+//    if (rayAngle <= -M_PI) rayAngle += 2 * M_PI;
+//    //int rayStartX = (player->x >> 6) << 6;
+//    //int rayStartY = player->y;
+//    //rayStartX >>= 6;
+//
+//    //Start detecting horizontal lines
+//
+//    depthOfField = 0;
+//    float disH = 50000, hx = player->x, hy = player->y;
+//    float aTan = -1/tan(rayAngle);
+//    if (rayAngle < 0 && rayAngle > -M_PI) {
+//	rayY = (((int)player->y >> 6) << 6) - 0.0001;
+//	rayX = (player->y - rayY) * aTan + player->x;
+//	yOffset = -64;
+//	xOffset = -yOffset * aTan;
+//    } else if (rayAngle > 0 && rayAngle < M_PI) {
+//	rayY = (((int)player->y >> 6) << 6) + 64;
+//	rayX = (player->y - rayY) * aTan + player->x;
+//	yOffset = 64;
+//	xOffset = -yOffset * aTan;
+//    } else if (rayAngle == 0 || rayAngle == M_PI || rayAngle == M_PI) {
+//	rayY = player->y;
+//	rayX = player->x;
+//	depthOfField = 8;
+//    }
+//
+//    while (depthOfField < 8) {
+//	mapX = (int)(rayX) >> 6;
+//	mapY = (int)(rayY) >> 6;
+//	if (mapX >= 0 && mapX <= 9 && mapY >= 0 && mapY <= 9 && map[mapY][mapX] > 0) {
+//	    hx = rayX;
+//	    hy = rayY;
+//	    disH = dist(player->x, player->y, hx, hy, rayAngle);
+//	    depthOfField = 8;
+//	    colour = map[mapY][mapX];
+//	    //printf("disH: %f\n", disH);
+//	} else {
+//	    rayX += xOffset;
+//	    rayY += yOffset;
+//	    depthOfField++;
+//	}
+//    }
+//
+//
+//    //Start detecting vertical lines
+//    depthOfField = 0;
+//    float disV = 50000, vx = player->x, vy = player->y;
+//    float nTan = -tan(rayAngle);
+//    if (rayAngle < -M_PI / 2 || rayAngle > M_PI / 2) {
+//	rayX = (((int)player->x >> 6) << 6) - 0.0001;
+//	rayY = (player->x - rayX) * nTan + player->y;
+//	xOffset = -64;
+//	yOffset = -xOffset * nTan;
+//    } else if (rayAngle < M_PI / 2 || rayAngle > -M_PI / 2) {
+//	rayX = (((int)player->x >> 6) << 6) + 64;
+//	rayY = (player->x - rayX) * nTan + player->y;
+//	xOffset = 64;
+//	yOffset = -xOffset * nTan;
+//    } else if (rayAngle == M_PI / 2 || rayAngle == -M_PI / 2) {
+//	rayY = player->y;
+//	rayX = player->x;
+//	depthOfField = 8;
+//    }
+//
+//    while (depthOfField < 8) {
+//	mapX = (int)(rayX) >> 6;
+//	mapY = (int)(rayY) >> 6;
+//	if (mapX >= 0 && mapX <= 9 && mapY >= 0 && mapY <= 9 && map[mapY][mapX] > 0) {
+//	    vx = rayX;
+//	    vy = rayY;
+//	    disV = dist(player->x, player->y, vx, vy, rayAngle);
+//	    depthOfField = 8;
+//	    colour = map[mapY][mapX];
+//	    //printf("disV: %f\n", disV);
+//	} else {
+//	    rayX += xOffset;
+//	    rayY += yOffset;
+//	    depthOfField++;
+//	}
+//    }
+//    char thing = 'Z';
+//
+//    if (disV < disH) {
+//	rayX = vx;
+//	rayY = vy;
+//	disT = disV;
+//	thing = '#';
+//    } else if (disH < disV) {
+//    //} else {
+//	rayX = hx;
+//	rayY = hy;
+//	disT = disH;
+//	thing = '#';
+//    } else {
+//	//return 0; //NEED TO FIX
+//	thing = '#';
+//	disT = disH;
+//    }
+//	//printf("%f, %f\n", disH, disV);
+//
+//    float radPAngle = player->angle * (M_PI / 180);
+//    float cAngle = radPAngle - rayAngle;
+//
+//    if (cAngle > M_PI) cAngle -= 2 * M_PI;
+//    if (cAngle < -M_PI) cAngle += 2 * M_PI;
+//
+//    disT *= cos(cAngle);
+//    int lineH = abs((64 * rows) / disT); //REPLACE 44 WITH SCREEN HEIGHT
+//    if (lineH > rows) {
+//	lineH = rows;
+//    }
+//    
+//    //DRAW THE LINE, STARTING AT CORRECT POINT
+//    //printf("map thing: %d\n", map[0][3]);
+//    //int drawX = 40 + angle - player->angle;
+////    if (drawX > 180) drawX -= 360;
+////    if (drawX < -180) drawX += 360;
+//    int drawX = col;
+//    //printf("disT = %f, lineH = %d\n", disT, lineH);
+//    //printf("%d\n", drawX);
+//    int lineOffset = (rows / 2) - (lineH >> 1);
+//    render_line(drawX, lineOffset, lineH, thing, colour);
+//    //printf("%f\n", disT);
+//    return disT;
+//}
+
 float cast_ray(int (*map)[10], Player_info* player, float angle, int col, int rows)
 {
-    int mapX, mapY, depthOfField;
-    float rayX, rayY, yOffset, xOffset, disT;
-    int colour = 1;
+    const int MAP_W = 10, MAP_H = 10;
+    const float TILE = 64.0f;
+    const float EPS = 0.0001f;
 
+    int mapX, mapY;
+    float rayX, rayY, xOffset, yOffset;
+    int colourH = 0, colourV = 0;
 
+    // Start with "no hit" distances very large
+    float disH = 1e30f, hx = player->x, hy = player->y;
+    float disV = 1e30f, vx = player->x, vy = player->y;
+
+    // Angle in radians, normalized
     float rayAngle = angle * (M_PI / 180.0f);
-    if (rayAngle > M_PI) rayAngle -= 2 * M_PI;
-    if (rayAngle <= -M_PI) rayAngle += 2 * M_PI;
-    //int rayStartX = (player->x >> 6) << 6;
-    //int rayStartY = player->y;
-    //rayStartX >>= 6;
+    while (rayAngle >  M_PI) rayAngle -= 2.0f * M_PI;
+    while (rayAngle <= -M_PI) rayAngle += 2.0f * M_PI;
 
-    //Start detecting horizontal lines
-
-    depthOfField = 0;
-    float disH = 50000, hx = player->x, hy = player->y;
-    float aTan = -1/tan(rayAngle);
-    if (rayAngle < 0 && rayAngle > -M_PI) {
-	rayY = (((int)player->y >> 6) << 6) - 0.0001;
-	rayX = (player->y - rayY) * aTan + player->x;
-	yOffset = -64;
-	xOffset = -yOffset * aTan;
-    } else if (rayAngle > 0 && rayAngle < M_PI) {
-	rayY = (((int)player->y >> 6) << 6) + 64;
-	rayX = (player->y - rayY) * aTan + player->x;
-	yOffset = 64;
-	xOffset = -yOffset * aTan;
-    } else if (rayAngle == 0 || rayAngle == M_PI || rayAngle == M_PI) {
-	rayY = player->y;
-	rayX = player->x;
-	depthOfField = 8;
+    // -------- HORIZONTAL grid intersections --------
+    float aTan = -1.0f / tanf(rayAngle == 0.0f ? 1e-6f : rayAngle);
+    if (rayAngle < 0.0f) { // looking up
+        rayY = (((int)player->y >> 6) << 6) - EPS;
+        rayX = (player->y - rayY) * aTan + player->x;
+        yOffset = -TILE;
+        xOffset = -yOffset * aTan;
+    } else if (rayAngle > 0.0f) { // looking down
+        rayY = (((int)player->y >> 6) << 6) + TILE;
+        rayX = (player->y - rayY) * aTan + player->x;
+        yOffset = TILE;
+        xOffset = -yOffset * aTan;
+    } else { // exactly horizontal (no horizontal crossings)
+        xOffset = yOffset = 0.0f;
     }
 
-    while (depthOfField < 8) {
-	mapX = (int)(rayX) >> 6;
-	mapY = (int)(rayY) >> 6;
-	if (mapX >= 0 && mapX <= 9 && mapY >= 0 && mapY <= 9 && map[mapY][mapX] > 0) {
-	    hx = rayX;
-	    hy = rayY;
-	    disH = dist(player->x, player->y, hx, hy, rayAngle);
-	    depthOfField = 8;
-	    colour = map[mapY][mapX];
-	    //printf("disH: %f\n", disH);
-	} else {
-	    rayX += xOffset;
-	    rayY += yOffset;
-	    depthOfField++;
-	}
+    for (int d = 0; d < 100; ++d) {
+        mapX = (int)floorf(rayX / TILE);
+        mapY = (int)floorf(rayY / TILE);
+        if (mapX < 0 || mapX >= MAP_W || mapY < 0 || mapY >= MAP_H) break;
+        if (map[mapY][mapX] > 0) {
+            hx = rayX; hy = rayY;
+            disH = dist(player->x, player->y, hx, hy, 0.0f);
+            colourH = map[mapY][mapX];
+            break;
+        }
+        rayX += xOffset; rayY += yOffset;
     }
 
-
-    //Start detecting vertical lines
-    depthOfField = 0;
-    float disV = 50000, vx = player->x, vy = player->y;
-    float nTan = -tan(rayAngle);
-    if (rayAngle < -M_PI / 2 || rayAngle > M_PI / 2) {
-	rayX = (((int)player->x >> 6) << 6) - 0.0001;
-	rayY = (player->x - rayX) * nTan + player->y;
-	xOffset = -64;
-	yOffset = -xOffset * nTan;
-    } else if (rayAngle < M_PI / 2 || rayAngle > -M_PI / 2) {
-	rayX = (((int)player->x >> 6) << 6) + 64;
-	rayY = (player->x - rayX) * nTan + player->y;
-	xOffset = 64;
-	yOffset = -xOffset * nTan;
-    } else if (rayAngle == M_PI / 2 || rayAngle == -M_PI / 2) {
-	rayY = player->y;
-	rayX = player->x;
-	depthOfField = 8;
+    // -------- VERTICAL grid intersections --------
+    float nTan = -tanf(rayAngle);
+    if (rayAngle > -M_PI/2 && rayAngle < M_PI/2) { // looking right
+        rayX = (((int)player->x >> 6) << 6) + TILE;
+        rayY = (player->x - rayX) * nTan + player->y;
+        xOffset = TILE;
+        yOffset = -xOffset * nTan;
+    } else if (rayAngle < -M_PI/2 || rayAngle > M_PI/2) { // looking left
+        rayX = (((int)player->x >> 6) << 6) - EPS;
+        rayY = (player->x - rayX) * nTan + player->y;
+        xOffset = -TILE;
+        yOffset = -xOffset * nTan;
+    } else { // exactly vertical (no vertical crossings)
+        xOffset = yOffset = 0.0f;
     }
 
-    while (depthOfField < 8) {
-	mapX = (int)(rayX) >> 6;
-	mapY = (int)(rayY) >> 6;
-	if (mapX >= 0 && mapX <= 9 && mapY >= 0 && mapY <= 9 && map[mapY][mapX] > 0) {
-	    vx = rayX;
-	    vy = rayY;
-	    disV = dist(player->x, player->y, vx, vy, rayAngle);
-	    depthOfField = 8;
-	    colour = map[mapY][mapX];
-	    //printf("disV: %f\n", disV);
-	} else {
-	    rayX += xOffset;
-	    rayY += yOffset;
-	    depthOfField++;
-	}
+    for (int d = 0; d < 100; ++d) {
+        mapX = (int)floorf(rayX / TILE);
+        mapY = (int)floorf(rayY / TILE);
+        if (mapX < 0 || mapX >= MAP_W || mapY < 0 || mapY >= MAP_H) break;
+        if (map[mapY][mapX] > 0) {
+            vx = rayX; vy = rayY;
+            disV = dist(player->x, player->y, vx, vy, 0.0f);
+            colourV = map[mapY][mapX];
+            break;
+        }
+        rayX += xOffset; rayY += yOffset;
     }
-    char thing = 'Z';
 
+    // Pick the nearer hit AND its colour
+    float disT;
+    int colour;
     if (disV < disH) {
-	rayX = vx;
-	rayY = vy;
-	disT = disV;
-	thing = 'X';
-    } else if (disH < disV) {
-    //} else {
-	rayX = hx;
-	rayY = hy;
-	disT = disH;
-	thing = 'O';
+        disT = disV;
+        colour = colourV;
     } else {
-	return 0; //NEED TO FIX
+        disT = disH;
+        colour = colourH;
     }
-	//printf("%f, %f\n", disH, disV);
 
-    float radPAngle = player->angle * (M_PI / 180);
+    // Fish-eye correction
+    float radPAngle = player->angle * (M_PI / 180.0f);
     float cAngle = radPAngle - rayAngle;
+    while (cAngle >  M_PI) cAngle -= 2.0f * M_PI;
+    while (cAngle < -M_PI) cAngle += 2.0f * M_PI;
+    disT *= cosf(cAngle);
 
-    if (cAngle > M_PI) cAngle -= 2 * M_PI;
-    if (cAngle < -M_PI) cAngle += 2 * M_PI;
+    // Project and draw
+    float denom = (disT > 1e-6f) ? disT : 1e-6f;
+    int lineH = (int)fabsf((TILE * rows) / denom);
+    if (lineH > rows) lineH = rows;
 
-    disT *= cos(cAngle);
-    int lineH = abs((64 * rows) / disT); //REPLACE 44 WITH SCREEN HEIGHT
-    if (lineH > rows) {
-	lineH = rows;
-    }
-    
-    //DRAW THE LINE, STARTING AT CORRECT POINT
-    //printf("map thing: %d\n", map[0][3]);
-    //int drawX = 40 + angle - player->angle;
-//    if (drawX > 180) drawX -= 360;
-//    if (drawX < -180) drawX += 360;
     int drawX = col;
-    //printf("disT = %f, lineH = %d\n", disT, lineH);
-    //printf("%d\n", drawX);
     int lineOffset = (rows / 2) - (lineH >> 1);
-    render_line(drawX, lineOffset, lineH, thing, colour);
-    //printf("%f\n", disT);
+    render_line(drawX, lineOffset, lineH, '#', colour);
+
     return disT;
 }
 
-float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sprite** sprites)
+
+float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sprite** sprites, int numSprites)
 {
+    // 1) Build z-buffer by casting rays per column
     float zBuffer[cols];
-
     for (int col = 0; col < cols; col++) {
-	float rayAngle = (player->angle - (FOV / 2.0f)) + ((float)col / cols) * FOV;
-	zBuffer[col] = cast_ray(map, player, rayAngle, col, rows);  // Pass exact screen column
+        float rayAngle = (player->angle - (FOV / 2.0f)) + ((float)col / (float)cols) * FOV;
+        zBuffer[col] = cast_ray(map, player, rayAngle, col, rows);
+        // Cast may return 0 on tie — treat as “very far” so sprites in front can still draw
+        if (zBuffer[col] <= 0.0f) zBuffer[col] = 1e9f;
     }
-    for (int spriteNum = 0; spriteNum < 1; spriteNum++) { //NEED TO CHANGE 1 TO THE NUMBER OF SPRITES
-	(*sprites)[spriteNum].distanceToPlayer = 
-	    dist((float)player->x, (float)player->y, (float)(*sprites)[spriteNum].x, (float)(*sprites)[spriteNum].y, 0);
+
+    // 2) Compute sprite distances (ALWAYS use (*sprites)[i])
+    for (int i = 0; i < numSprites; i++) {
+        Sprite* s = &(*sprites)[i];
+        s->distanceToPlayer = dist((float)player->x, (float)player->y, (float)s->x, (float)s->y, 0.0f);
     }
-    //NEED TO QSORT ARRAY BASED ON DISTANCE FROM PLAYER, FURTHEST AWAY SHOULD BE FIRST
-    //debug_init();
-    //debug_print("degrees: %f, radians: \n", player->angle);
-    for (int spriteNum = 0; spriteNum < 1; spriteNum++) { //ALSO NEED TO MAKE 1 INTO NUMBER OF SPRITES
-	int xDiff = sprites[spriteNum]->x - player->x;
-	int yDiff = sprites[spriteNum]->y - player->y;
-	//float angFromPlayer = atan2(-yDiff, xDiff) * (180 / M_PI);
-	//if (angFromPlayer < -180) {
-	//    angFromPlayer += 360;
-	//} else if (angFromPlayer > 180) {
-	//    angFromPlayer -= 360;
-	//}
-	//int q = player->angle + (FOV / 2) - angFromPlayer;
-	//if (player->angle > 90 && q < -90) {
-	//    q -= 360;
-	//}
-	//if (player->angle < -90 && q > 90) {
-	//    q -= 360;
-	//}
-	//int spriteScreenX = (cols / FOV) * q;
-	float dx = sprites[spriteNum]->x - player->x;
-	float dy = sprites[spriteNum]->y - player->y;
 
-	float spriteAngle = atan2(dy, dx) * (180.0f / M_PI); // angle to sprite
-	float angleDiff = spriteAngle - player->angle;
+    // TODO: sort sprites back-to-front by distanceToPlayer if you want proper overlap.
 
-	// Normalize angleDiff to [-180, 180]
-	while (angleDiff > 180) angleDiff -= 360;
-	while (angleDiff < -180) angleDiff += 360;
+    // 3) Project and draw sprites with clipping & depth test
 
-	// Skip sprite if outside of FOV
-	if (fabs(angleDiff) > FOV / 2) continue;
+    qsort(*sprites, numSprites, sizeof(Sprite), compar);
 
-	// Project to screen X
-	float screenXRatio = (angleDiff + (FOV / 2)) / FOV;
-	int spriteScreenX = screenXRatio * cols;
+    for (int i = 0; i < numSprites; i++) {
+        Sprite* s = &(*sprites)[i];
 
-	int spriteScreenY = rows / 4;
-	int spriteDist = sqrt((xDiff * xDiff) + (yDiff * yDiff));
-	int spriteHeight = (rows * 64) / spriteDist;
-	int spriteWidth = spriteHeight;
-	int startCol = spriteScreenX - spriteWidth / 2;
-	if (startCol < 0) {
-	    startCol = 0;
-	}
-	int endCol = spriteScreenX + spriteWidth / 2;
-	if (endCol > cols) {
-	    endCol = cols;
-	}
-	//debug_print("ssX: %d, sW/2: %d\n", spriteScreenX, spriteWidth / 2);
-	//debug_print("startCol: %d, endCol: %d\n", startCol, endCol);
-	for (int col = startCol; col < endCol; col++) {
-	    if (zBuffer[col] > spriteDist) {
-		//debug_print("col: %d, y thing: %d, size: %d\n", col, spriteScreenY - spriteWidth / 2, spriteWidth);
-		render_line(col, spriteScreenY - spriteWidth / 2, spriteWidth, 'B', 1);
-	    }
-	}
+        // Vector from player to sprite
+        float dx = (float)s->x - (float)player->x;
+        float dy = (float)s->y - (float)player->y;
+
+        // Angle to sprite in degrees
+        float spriteAngle = atan2f(dy, dx) * (180.0f / M_PI);
+
+        // Difference from player facing
+        float angleDiff = spriteAngle - player->angle;
+        while (angleDiff > 180.0f)  angleDiff -= 360.0f;
+        while (angleDiff < -180.0f) angleDiff += 360.0f;
+
+        // Cull if outside FOV
+        if (fabsf(angleDiff) > (FOV * 0.5f)) continue;
+
+        // Distance (avoid zero to prevent div-by-zero)
+        float spriteDist = sqrtf(dx*dx + dy*dy);
+	// correct fish-eye
+	float playerRad = player->angle * (M_PI / 180.0f);
+	float spriteAngleRad = atan2f(dy, dx);
+	float angleDiffRad = spriteAngleRad - playerRad;
+
+	while (angleDiffRad > M_PI)  angleDiffRad -= 2*M_PI;
+	while (angleDiffRad < -M_PI) angleDiffRad += 2*M_PI;
+
+	spriteDist *= cosf(angleDiffRad);
+        if (spriteDist < 1e-3f) spriteDist = 1e-3f;
+
+        // Simple projection to screen X
+        float screenXRatio = (angleDiff + (FOV * 0.5f)) / FOV;   // 0..1 across FOV
+        int spriteScreenX = (int)(screenXRatio * cols);
+        int spriteScreenY = rows / 2;  // center vertically for now
+
+        // Apparent sprite size (scaled like your wall height calc)
+        int spriteHeight = (int)((rows * 64.0f) / spriteDist);
+        int spriteWidth  = spriteHeight;
+
+        // Clip width/height to sane range
+        if (spriteWidth  < 1) spriteWidth  = 1;
+        if (spriteHeight < 1) spriteHeight = 1;
+        if (spriteHeight > rows) spriteHeight = rows;  // vertical clamp
+
+        // Horizontal span (clipped)
+        int startCol = spriteScreenX - (spriteWidth / 2);
+        int endCol   = spriteScreenX + (spriteWidth / 2);
+        if (startCol < 0)    startCol = 0;
+        if (endCol   > cols) endCol   = cols;
+
+        // Vertical start for render_line (clipped so it doesn’t go negative)
+        int startRow = spriteScreenY - (spriteHeight / 2);
+        if (startRow < 0) startRow = 0;
+        if (startRow + spriteHeight > rows) {
+            spriteHeight = rows - startRow;
+            if (spriteHeight <= 0) continue;
+        }
+
+        // Draw columns that pass the z-test
+        for (int col = startCol; col < endCol; col++) {
+            // Depth test: sprite must be in front of wall slice
+            if (spriteDist < zBuffer[col]) {
+                // Render a vertical slice of the sprite. Here we just reuse render_line as a solid column.
+                // If you later texture sprites, you’ll sample the correct column instead of drawing a solid.
+                render_line(col, startRow, spriteHeight, 'B', 1);
+            }
+        }
     }
-    //debug_close();
+
+    return 0.0f; // function is declared float; return something (unused)
 }
+

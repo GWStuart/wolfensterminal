@@ -72,8 +72,4 @@ void acceleration(Player_info* player, Inputs* inputs) {
 	    player->x -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
 	    player->y += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> e0bc7d31adbc91ec6ebf8084cf9d8bd22e29953a

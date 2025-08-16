@@ -1,5 +1,5 @@
 //compile with:
-//gcc -o fazMain fazMain.c 3dEngine.c render.c input.c player_info.c -lm -lncurses
+//gcc -o fazMain fazMain.c 3dEngine.c render.c input.c player_info.c debug/debug.c -lm -lncurses
 
 
 #include "3dEngine.h"
@@ -18,13 +18,13 @@
 
     int map[10][10] = {
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
+	{2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
+	{2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
+	{2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
+	{2, 0, 0, 0, 0, 0, 2, 2, 2, 4}, 
+	{2, 0, 0, 0, 0, 0, 3, 0, 0, 4}, 
+	{2, 1, 1, 1, 0, 0, 3, 0, 0, 4}, 
+	{2, 0, 0, 0, 0, 0, 3, 0, 0, 4}, 
 	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
 	{3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
     };
@@ -33,10 +33,17 @@ int main()
 {
     //NEED TO MAKE THIS CODE NOT HARD CODED AND ACTUALLY WORK FOR ALL SCENARIOS
     debug_init();
-    Sprite* sprites = malloc(sizeof(Sprite) * 1);
+    int numSprites = 3;
+    Sprite* sprites = malloc(sizeof(Sprite) * numSprites);
     sprites[0].x = 5*64;
     sprites[0].y = 3*64;
     sprites[0].isAngled = false;
+    sprites[1].x = 2*64;
+    sprites[1].y = 2*64;
+    sprites[1].isAngled = false;
+    sprites[2].x = 3*64;
+    sprites[2].y = 5*64;
+    sprites[2].isAngled = false;
     InputDeviceStuff iDS = open_devices();
     Inputs inputs = {.forward = false,
 	.back = false,
@@ -80,7 +87,7 @@ int main()
 	float FOV = 70.0f; // degrees
 	float FOV_RAD = FOV * (M_PI / 180.0f);
 
-	draw_all_stuff(map, &player, cols, rows, &sprites);  // Pass exact screen column
+	draw_all_stuff(map, &player, cols, rows, &sprites, numSprites);  // Pass exact screen column
 
 
 //
@@ -94,7 +101,7 @@ int main()
     //player.angle++;
     //inputs.mouseX = 0;
     detect_input(&iDS, &inputs);
-    debug_print("mouseX: %d\n", inputs.mouseX);
+    //debug_print("mouseX: %d\n", inputs.mouseX);
     player.angle += inputs.mouseX; //UNCOMMENT IF MOUSE IS WORKING AS INTENDED
     if (player.angle < -180) {
 	player.angle += 360;

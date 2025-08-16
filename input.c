@@ -74,7 +74,6 @@ InputDeviceStuff open_devices() {
             close(iDS.fd);
         }
     }
-    
     if (iDS.total_devices_found == 0) {
         fprintf(stderr, "Could not find any suitable input devices. Make sure you have permissions.\n");
         close(iDS.epollfd);
