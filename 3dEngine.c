@@ -7,6 +7,9 @@
 #define BL_SHIFT 6
 #define BLOCK_SIZE 64
 
+#define FOV 70.0f // degrees
+#define FOV_RAD (FOV * (M_PI / 180.0f))
+
 float dist(float ax, float ay, float bx, float by, float ang) {
     return (sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)));
 }
@@ -148,8 +151,6 @@ float cast_ray(int (*map)[10], Player_info* player, float angle, int col, int ro
 float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sprite** sprites)
 {
     float zBuffer[cols];
-    float FOV = 70.0f; // degrees
-    float FOV_RAD = FOV * (M_PI / 180.0f);
 
     for (int col = 0; col < cols; col++) {
 	float rayAngle = (player->angle - (FOV / 2.0f)) + ((float)col / cols) * FOV;
@@ -160,4 +161,31 @@ float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sp
 	    dist((float)player->x, (float)player->y, (float)(*sprites)[spriteNum].x, (float)(*sprites)[spriteNum].x, 0);
     }
     //NEED TO QSORT ARRAY BASED ON DISTANCE FROM PLAYER, FURTHEST AWAY SHOULD BE FIRST
+    for (int spriteNum = 0; spriteNum < 1; spriteNum++) { //ALSO NEED TO MAKE 1 INTO NUMBER OF SPRITES
+	int xDiff = sprites[spriteNum]->x - player->x;
+	int yDiff = sprites[spriteNum]->y - player->y;
+	float angFromPlayer = atan2(-yDiff, xDiff) * (180 / M_PI);
+	if (angFromPlayer < -180) {
+	    angFromPlayer += 360;
+	} else if (angFromPlayer > 180) {
+	    angFromPlayer -= 360;
+	}
+	int q = player->angle + (FOV / 2) - angFromPlayer;
+	if (player->angle > 90 && q < -90) {
+	    q += 360;
+	}
+	if (player->angle < -90 && q > 90) {
+	    q -= 360;
+	}
+	int spriteScreenX = (cols * FOV) * q;
+	int spriteScreenY = rows / 4;
+	int spriteDist = sqrt((xDiff * xDiff) + (yDiff * yDiff));
+	int spriteHeight = abs((rows * 64) / spriteDist);
+	int spriteWidth = spriteHeight;
+	for (int col = spriteScreenX - spriteWidth / 2; col < spriteScreenX + spriteWidth / 2; col++) {
+	    if (zBuffer[col] > spriteDist) {
+		render_line(col, spriteScreenY - spriteWidth / 2, spriteWidth, 'B', 1);
+	    }
+	}
+    }
 }
