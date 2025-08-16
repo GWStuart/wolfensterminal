@@ -30,4 +30,6 @@ textureNumber specifies which texture to use (just pass 1 for now)
 */
 void render_line_texture(int x, int y, int length, int pos, int textureNumber, bool darker, float scaleFactor, float scaleOffset);
 
+void render_player(int x, int y, int column, int height);
+
 #endif
