@@ -20,7 +20,7 @@ void render_screen(Player_info* player) {
     refresh();
 }
 
-int main() {
+void main_editor() {
     // setup the screen
     setup_screen();
 
@@ -52,5 +52,4 @@ int main() {
     free(level);
 
     endwin();
-    return 0;
 }
