@@ -6,16 +6,7 @@
 #include <stdlib.h>
 #include "render.h"
 
-#define MAX_SPEED 100
-#define MIN_SPEED 1
-#define PI 3.14
-
-typedef struct{
-    int x;
-    int y; 
-    float angle;
-    int speed;
-} Player_info;
+#include "config.h"
 
 Player_info* init_player_info(int fazell_angle, int fazell_pos_x, int fazell_pos_y, float fazell_speed);
 

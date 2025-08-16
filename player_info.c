@@ -1,4 +1,5 @@
 #include "player_info.h"
+#include "config.h"
 
 
 int fazell_angle = 0; //placeholder, will replace with actual angle given by fazell

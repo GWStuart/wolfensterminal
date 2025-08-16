@@ -14,4 +14,4 @@ main: player_info.o render.o main.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f playerinfo *.o
+	rm -f main *.o

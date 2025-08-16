@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <sys/epoll.h>
 #include <linux/input.h>
+#include <stdbool.h>
 
 #define EVENT_DEVICE_PATH "/dev/input/event"
 #define MAX_EVENTS 64
