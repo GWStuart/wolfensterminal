@@ -46,27 +46,27 @@ void acceleration(Player_info* player, Inputs* inputs) {
 
     float accel_factor = 0;
     if(target_speed != 0){
-        accel_factor = 1.05; 
+        accel_factor = 1.10; 
     }
     else{
-        accel_factor = 0.01;
+        accel_factor = 0.001;
     }
    
 
     if (inputs->forward) {
-	    player->x += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
-	    player->y += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+	    player->x += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+	    player->y += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
     }
     if (inputs->back) {
-	    player->x -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
-	    player->y -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
-    }
-    if (inputs->left) {
-	    player->x += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+	    player->x -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
 	    player->y -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
     }
+    if (inputs->left) {
+	    player->x += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+	    player->y -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+    }
     if (inputs->right) {
-	    player->x -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
-	    player->y += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+	    player->x -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+	    player->y += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
     }
 }
