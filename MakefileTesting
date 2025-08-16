@@ -1,0 +1,23 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -pedantic -std=gnu99 
+LDFLAGS = -lm -lncurses
+
+.PHONY: all 
+.DEFAULT_GOAL:= all
+
+all: test
+
+# This makefile is only used for building your tests
+#
+# Make changes to this file if you want to build something with difference
+# dependencies but don't commit it to the main branch since this is just
+# for your personal testing
+#
+# to build using this Makefile use the following command
+# > make -f MakefileTesting
+#
+test: test.c
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+clean:
+	rm -f test *.o
