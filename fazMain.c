@@ -7,6 +7,7 @@
 #include "input.h"
 #include "player_info.h"
 #include "sprite.h"
+#include "debug/debug.h"
 
 #include <unistd.h>
 #include <math.h>
@@ -31,6 +32,7 @@
 int main()
 {
     //NEED TO MAKE THIS CODE NOT HARD CODED AND ACTUALLY WORK FOR ALL SCENARIOS
+    debug_init();
     Sprite* sprites = malloc(sizeof(Sprite) * 1);
     sprites[0].x = 5*64;
     sprites[0].y = 3*64;
@@ -92,9 +94,13 @@ int main()
     //player.angle++;
     //inputs.mouseX = 0;
     detect_input(&iDS, &inputs);
-    wmove(stdscr, 0, 0);
-    printw("%d", inputs.mouseX);
+    debug_print("mouseX: %d\n", inputs.mouseX);
     player.angle += inputs.mouseX; //UNCOMMENT IF MOUSE IS WORKING AS INTENDED
+    if (player.angle < -180) {
+	player.angle += 360;
+    } else if (player.angle > 180) {
+	player.angle -= 360;
+    }
     inputs.mouseX = 0;
     //acceleration(&player, &inputs);
     

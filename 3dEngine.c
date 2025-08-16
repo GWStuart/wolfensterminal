@@ -163,8 +163,8 @@ float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sp
 	    dist((float)player->x, (float)player->y, (float)(*sprites)[spriteNum].x, (float)(*sprites)[spriteNum].y, 0);
     }
     //NEED TO QSORT ARRAY BASED ON DISTANCE FROM PLAYER, FURTHEST AWAY SHOULD BE FIRST
-    debug_init();
-    debug_print("degrees: %f, radians: \n", player->angle);
+    //debug_init();
+    //debug_print("degrees: %f, radians: \n", player->angle);
     for (int spriteNum = 0; spriteNum < 1; spriteNum++) { //ALSO NEED TO MAKE 1 INTO NUMBER OF SPRITES
 	int xDiff = sprites[spriteNum]->x - player->x;
 	int yDiff = sprites[spriteNum]->y - player->y;
@@ -220,5 +220,5 @@ float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sp
 	    }
 	}
     }
-    debug_close();
+    //debug_close();
 }
