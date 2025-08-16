@@ -1,7 +1,7 @@
 #include "player_info.h"
 
 
-int fazell_angle = 0; //placeholder, will replace with actual angle given by stdin
+int fazell_angle = 0; //placeholder, will replace with actual angle given by fazell
 int fazell_pos_x = 0;
 int fazell_pos_y = 0;
 int fazell_speed = 1;

@@ -1,4 +1,5 @@
 #include <ncurses.h>
+#include <unistd.h>
 #include "player_info.h"
 #include "render.h"
 
@@ -13,7 +14,7 @@ void render_screen(Player_info* player) {
     //render_line(15, 15, 5, '@');
     //render_line(100, 30, 30, '@');
 
-    render_rect(player->position_x, player->position_y, 4, 2, '#');
+    render_rect(player->x, player->y, 4, 2, '#');
 
     refresh();
 }
