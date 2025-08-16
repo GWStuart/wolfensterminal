@@ -1,0 +1,4 @@
+Essentially cerates a file where you can see your debug output.
+
+To view the log file live use:
+tail -f logs/debug.out

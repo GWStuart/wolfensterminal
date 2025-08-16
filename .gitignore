@@ -5,4 +5,5 @@ playerinfo
 test
 MakefileTesting
 test.c
+logs/*
 
