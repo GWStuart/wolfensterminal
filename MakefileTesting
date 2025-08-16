@@ -16,8 +16,11 @@ all: test
 # to build using this Makefile use the following command
 # > make -f MakefileTesting
 #
-test: test.c
+test: test.o debug/debug.o
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f test *.o
