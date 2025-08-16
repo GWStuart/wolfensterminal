@@ -36,8 +36,8 @@ void update_player_pos(Player_info* P_info){
 
 }
 */
+/*
 void acceleration(Player_info* player, Inputs* inputs) {
-
     int target_speed = 0; //default is 0, will decelerate into 0 if theres no input
     if (inputs->forward || inputs->back || inputs->left || inputs->right) {
         player->curr_speed = 1;
@@ -54,19 +54,65 @@ void acceleration(Player_info* player, Inputs* inputs) {
    
 
     if (inputs->forward) {
-	    player->x += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
-	    player->y += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
-    }
-    if (inputs->back) {
-	    player->x -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
-	    player->y -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
-    }
-    if (inputs->left) {
 	    player->x += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
-	    player->y -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
-    }
-    if (inputs->right) {
-	    player->x -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
 	    player->y += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
     }
+    if (inputs->back) {
+	    player->x -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+	    player->y -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+    }
+    if (inputs->left) {
+	    player->x += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+	    player->y -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+    }
+    if (inputs->right) {
+	    player->x -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+	    player->y += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+    }
+*/
+// This function replaces your entire existing function.
+// It assumes you have a 'curr_speed' float in your Player_info struct.
+void acceleration(Player_info* player, Inputs* inputs) {
+
+    // --- 1. Determine the player's INTENDED direction vector ("wish_dir") ---
+    float wish_dir_x = 0.0;
+    float wish_dir_y = 0.0;
+
+    if (inputs->forward) {
+        wish_dir_x += cos(TO_RAD(player->angle));
+        wish_dir_y += sin(TO_RAD(player->angle));
+    }
+    if (inputs->back) {
+        wish_dir_x -= cos(TO_RAD(player->angle));
+        wish_dir_y -= sin(TO_RAD(player->angle));
+    }
+    if (inputs->left) { // CORRECTED strafe logic
+        wish_dir_x += -sin(TO_RAD(player->angle));
+        wish_dir_y += cos(TO_RAD(player->angle));
+    }
+    if (inputs->right) { // CORRECTED strafe logic
+        wish_dir_x += sin(TO_RAD(player->angle));
+        wish_dir_y += -cos(TO_RAD(player->angle));
+    }
+
+    // --- 2. Normalize the direction vector to prevent diagonal speed boost ---
+    float dir_length = sqrt(wish_dir_x * wish_dir_x + wish_dir_y * wish_dir_y);
+    if (dir_length > 0.0) {
+        wish_dir_x /= dir_length;
+        wish_dir_y /= dir_length;
+    }
+
+    // --- 3. Handle smooth acceleration and deceleration ---
+    // Determine the target speed. If any key is pressed, target is max_speed, otherwise it's 0.
+    float target_speed = (dir_length > 0.0) ? player->max_speed : 0.0;
+    
+    // Use interpolation (lerp) for smooth speed changes.
+    // A higher factor means faster acceleration.
+    float accel_factor = 0.05; // Adjust this value to change how fast you accelerate
+    player->curr_speed += (target_speed - player->curr_speed) * accel_factor;
+
+    // --- 4. ALWAYS update the player's position using the final speed and direction ---
+    // (Ideally, you would multiply this by a delta_time value for frame-rate independence)
+    player->x += wish_dir_x * player->curr_speed;
+    player->y += wish_dir_y * player->curr_speed;
 }
