@@ -1,4 +1,5 @@
 #include "input.h"
+#include "stdbool.h"
 
 #define BITMASK_LEN 8 // 8 * 64 = 512 bits
 

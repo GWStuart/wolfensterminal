@@ -1,3 +1,8 @@
 main
+fazMain
+playerinfo
 *.o
+test
+MakefileTesting
+test.c
 
