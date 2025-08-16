@@ -1,6 +1,8 @@
 #include <ncurses.h>
 #include "player_info.h"
 #include "render.h"
+#include "map_editor.h"
+
 
 // add rendering stuff here
 void render_screen(Player_info* player) {
@@ -19,37 +21,36 @@ void render_screen(Player_info* player) {
 }
 
 int main() {
-    Player_info* player = init_player_info(0, 0, 0, 1);
-
     // setup the screen
     setup_screen();
 
-    for(int i = 0; i < 10; i++) {  // move 10 steps
+    Player_info* player = init_player_info(0, 0, 0, 1);
+
+    Level* level = create_level(20, 20);
+
+    map_edit(level);
+
+
+
+    for (int i = 0; i < 20; i++) {
         clear_screen();
 
-        update_player_pos(player);   // move player forward
+        update_player_pos(player);
         acceleration(player);
-        render_screen(player);
-        update_player_pos(player);   // move player forward
+
+        draw_level(level);         // draw the edited map
+        render_screen(player);     // draw the player on top
 
         refresh();
-        usleep(100000);  // 0.1s per frame
+        usleep(100000);
     }
 
-    for(int i = 0; i < 30; i++) {  // move 10 steps
-        clear_screen();
-
-        update_player_pos(player);   // move player forward
-        deceleration(player);
-        render_screen(player);
-        update_player_pos(player);   // move player forward
-
-
-        refresh();
-        usleep(100000);  // 0.1s per frame
-    }
-    
+    // Clean up
     free(player);
+    for (int i = 0; i < level->height; i++) free(level->grid[i]);
+    free(level->grid);
+    free(level);
+
     endwin();
     return 0;
 }
