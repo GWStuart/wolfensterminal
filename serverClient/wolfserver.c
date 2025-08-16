@@ -9,120 +9,21 @@
 #include <pthread.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <signal.h>
 #include "protocol.h"
 
-#define MAX_PLAYERS 5
-#define CORRECT_PREFIX 0x56561111
-#define NEW_PLAYER 1 //server sending new player information
-#define UPDATE_PLAYERS 2 //server sending updated players
-#define CLIENT_UPDATE 3 //client updating server
-#define DISCONNECT 4 // client telling server they are disconnecting
+#define SERVER_PORT 8080
 
+static volatile int running = 1;                                                 
+static void on_sigint(int sig){
+    (void)sig;
+    printf("hey! you just killed the server! guess who you just made very SAD!\n");
+    printf("DRRRRRRRAAATTTTTTTTT!!!!!\n");
+    fflush(stdout);
 
-typedef struct {
-    Player* playerList;
-    int listSize;
-} connectionList;
-
-
-void* handle_data(int sockfd) {
-    struct sockaddr_in clientaddr;
-    socklen_t addr_len = sizeof(clientaddr);
-    connectionList players = {0};
-    players.listSize = 0;
-    int index = 0;
-
-    while (1) {
-	index++;
-	Message msg = {0};
-	if(recieve_message(sockfd, &msg, &clientaddr, &addr_len) == 0){
-	    int playerID = -1;
-	    for(int i = 0; i<players.listSize; i++){
-		if(!memcmp(&players.playerList[i].connection, &clientaddr, sizeof(clientaddr))){
-		    playerID = i;
-		    break;
-		}
-	    }
-	    switch(msg.operation) {
-		case CLIENT_UPDATE: 
-		
-		if(playerID == -1){
-		    //perform sending map data, probably from a file of some sort
-		    //this is temp code.
-		    printf("shuf\n");
-		    players.listSize++;
-		    players.playerList = realloc(players.playerList, sizeof(Player)*players.listSize);
-		    Player newPlayer = {0};
-	            memcpy(&newPlayer, msg.data, sizeof(Player));
-		    newPlayer.pdata.id = players.listSize;
-		    players.playerList[players.listSize-1] = newPlayer;
-		    players.playerList[players.listSize-1].connection = clientaddr;
-
-
-		    const char *mapData = "deez nuts bumass client temp mapdata pretend I sent it to you";
-		    send_message(sockfd, &clientaddr, addr_len, 1, sizeof(mapData), (uint8_t*)mapData, newPlayer.pdata.id);
-		    //additionally, need to send the id as well
-
-		} else { //the message sent was an existing player
-		    Player newPlayer = {0};
-	            memcpy(&newPlayer, msg.data, sizeof(Player));
-		    players.playerList[playerID] = newPlayer;
-		    players.playerList[playerID].connection = clientaddr;
-		}
-		break;
-				    
-		case DISCONNECT: 
-		    if(playerID != players.listSize-1){
-			for(int i = playerID; i<players.listSize-1; i++){
-			    players.playerList[i] = players.playerList[i+1];
-			}
-		    }
-		    players.playerList = realloc(players.playerList, sizeof(Player)*players.listSize);
-		    break;
-	    }
-
-	    //sending updates to everysingle player, using only relevant information.
-
-	    fflush(stdout);
-	    if(players.listSize != 0){
-		Public* pdatas = malloc(sizeof(Public)*players.listSize);
-		for(int i = 0; i<players.listSize; i++){
-		    pdatas[i] = players.playerList[i].pdata;
-		}
-		for(int i = 0; i<players.listSize; i++){
-			send_message(sockfd, &players.playerList[i].connection, addr_len, UPDATE_PLAYERS, sizeof(Public)*players.listSize, (uint8_t*)pdatas, players.listSize);
-		}
-
-		free(pdatas);
-	    }
-
-
-	    if(!index%1000){
-		index = 0;
-		if(players.listSize == 0){
-		    printf("bum ass\n");
-		}
-
-		for(int i = 0; i<players.listSize; i++) {
-		    Player curPlayer = players.playerList[i];
-		    printf("ID: %d, x: %d, y: %d, angle: %f, health: %d, speed: %f\n",
-			    curPlayer.pdata.id, curPlayer.pdata.x, curPlayer.pdata.y, curPlayer.pdata.angle, curPlayer.health, curPlayer.speed);
-		}
-		fflush(stdout);
-
-	    }
-	    
-	    free(msg.data);
-	}
-    }
-    free(players.playerList);
-    close(sockfd);
-    return NULL;
-}
-
-
-
-#define PORT 8080
+    running = 0;
+    exit(0);
+}   
 
 
 int listen_on_port(int port){
@@ -144,23 +45,84 @@ int listen_on_port(int port){
         exit(-1);
     }
     printf("UDP connection on Port 8080\n");
-    handle_data(listenfd);
     return listenfd;
    }
 
 
 
 int main(){
-    //if(argc != 3){
-    //    fprintf(stderr, "./wolfserver port MAX_PLAYERS\n");
-    //    fprintf(stderr, "pretty fricking self explanatory lmfao\n");
-    //    return 1;
-    //}
-
-    //char* port = argv[1];
-    // udp: sock_dgram 
-    listen_on_port(PORT);
-    printf("gurt");
+    signal(SIGINT, on_sigint);
+    int sockfd = listen_on_port(SERVER_PORT);
+    Player players[MAX_PLAYERS] = {0};
+    uint8_t mapBytes[MAX_MAP_BYTES];
+    const char *mapStr = "########\n#......#\n#..##..#\n#......#\n########\n";
+    size_t mapSize = strlen(mapStr);
+    if(mapSize > MAX_MAP_BYTES) {
+	mapSize = MAX_MAP_BYTES;
+    }
+    memcpy(mapBytes, mapStr, mapSize);
+    while (running){
+	struct sockaddr_in clientaddr; socklen_t alen = sizeof(clientaddr);
+	MessageHeader hdr;                    
+	uint8_t payload[65507];
+	int datasz = recv_message(sockfd, &hdr, payload, sizeof(payload), &clientaddr, &alen);
+	if (datasz < 0) continue; // ignore malformed 
+	    uint8_t opcode = hdr.operation;    
+	    uint8_t cli_id = hdr.id;
+	    if (opcode == CLIENT_HELLO){
+	     if ((size_t)datasz < sizeof(Player)) continue;
+	     Player incoming;
+	     memcpy(&incoming, payload, sizeof(Player));
+	     int slot = -1;
+	     for (int i=0;i<MAX_PLAYERS;i++){
+		 if (!players[i].in_use){
+		     slot = i;
+		     break;
+		 }
+	     }
+	     if (slot < 0){ 
+		(void)send_message(sockfd, &clientaddr, alen, SERVER_SNAPSHOT, 0xFF, NULL, 0);
+		continue;
+	    } 
+	    players[slot] = incoming; 
+	    players[slot].pdata.id = (uint8_t)slot;
+	    players[slot].addr = clientaddr;
+	    players[slot].in_use = 1;
+	    WelcomePayload wp = {0};
+	    wp.assigned_id = (uint8_t)slot;
+	    wp.map_size = (uint16_t)mapSize;
+	    memcpy(wp.map_bytes, mapBytes, mapSize); 
+	    send_message(sockfd, &clientaddr, alen, SERVER_WELCOME, wp.assigned_id, &wp, sizeof(uint8_t)+sizeof(uint16_t)+mapSize);
+	    printf("Player %d connected from %s:%d\n", slot, inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
+	  } 
+	  else if (opcode == CLIENT_UPDATE){
+	      if (cli_id >= MAX_PLAYERS || !players[cli_id].in_use) continue;
+	      if ((size_t)datasz < sizeof(Player)) continue;
+	      Player updated;
+	      memcpy(&updated, payload, sizeof(Player));
+	      players[cli_id].pdata = updated.pdata;
+	      players[cli_id].speed = updated.speed;
+	      players[cli_id].health = updated.health;
+	      players[cli_id].addr = clientaddr;
+	      Public pubs[MAX_PLAYERS];
+	      size_t n = build_public_snapshot(players, MAX_PLAYERS, cli_id, pubs, MAX_PLAYERS);
+	      uint16_t count = (uint16_t)n;
+	      size_t bytes = sizeof(count) + n*sizeof(Public);
+	      uint8_t *buf = (uint8_t*)malloc(bytes);
+	      memcpy(buf, &count, sizeof(count));
+	      memcpy(buf+sizeof(count), pubs, n*sizeof(Public));
+	      send_message(sockfd, &clientaddr, alen, SERVER_SNAPSHOT, cli_id, buf, (uint32_t)bytes);
+	      free(buf);
+	} else if (opcode == CLIENT_DISCONNECT) {
+	    uint8_t id = cli_id;
+	    if(id < MAX_PLAYERS) {
+		players[id].in_use = 0;
+		printf("Player %d disconnected\n", id);
+		}
+	    }
+    }
+    close(sockfd);
+    
     return 0;
 
 }
