@@ -20,4 +20,13 @@ Renders a rectangle with the top-left corner at the specified x and y
 */
 void render_rect(int x, int y, int length, int width, chtype character);
 
+/*
+Renders a line with the specified texture
+(still a work in progress)
+
+pos specifies the position along the texture (should be an integer from 0 - 32)
+textureNumber specifies which texture to use (just pass 1 for now)
+*/
+void render_line_texture(int x, int y, int length, int pos, int textureNumber);
+
 #endif

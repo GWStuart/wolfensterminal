@@ -45,13 +45,6 @@ int main()
 	.mouseX = 0};
     setup_screen();
     clear_screen();
-    start_color();
-
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_GREEN, COLOR_BLACK);
-    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(4, COLOR_BLUE, COLOR_BLACK);
-    init_pair(5, COLOR_WHITE, COLOR_BLACK);
 
     Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .speed = 1.0f};
     //-90 is top

@@ -1,11 +1,28 @@
-#include <stdio.h>
+#include <ncurses.h>
+#include <unistd.h>
+#include "player_info.h"
+#include "render.h"
 
-/*
-Turn this into your personal testing file. Feel free to change it how
-you want and then don't commit it to github.
+// add rendering stuff here
+void render_screen() {
+    clear_screen();
 
-(i have already added it to the gitignore)
-*/
+    // do the actual rendering
+    for (int i=0; i<32; i++) {
+        render_line_texture(5 + i, 2, 32, '@', i);
+    }
+
+    refresh();
+}
+
 int main() {
-    printf("Hello, World\n");
+    // setup the screen
+    setup_screen();
+
+    render_screen();
+
+    getch();
+
+    endwin();
+    return 0;
 }
