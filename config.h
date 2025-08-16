@@ -17,7 +17,8 @@ typedef struct{
     int x;
     int y; 
     float angle;
-    int speed;
+    int curr_speed;
+    int max_speed;
 } Player_info;
 
 

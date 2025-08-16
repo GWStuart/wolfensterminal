@@ -8,7 +8,7 @@
 
 #include "config.h"
 
-Player_info* init_player_info(int fazell_angle, int fazell_pos_x, int fazell_pos_y, float fazell_speed);
+Player_info* init_player_info(int fazell_angle, int fazell_pos_x, int fazell_pos_y, int fazell_max_speed, int fazell_curr_speed);
 
 void update_player_pos(Player_info* P_info);
 
