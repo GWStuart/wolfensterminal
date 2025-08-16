@@ -24,7 +24,7 @@ int main() {
 
     // setup the screen
     setup_screen();
-
+    /*
     for(int i = 0; i < 10; i++) {  // move 10 steps
         clear_screen();
 
@@ -49,6 +49,7 @@ int main() {
         refresh();
         usleep(100000);  // 0.1s per frame
     }
+    */
     
     free(player);
     endwin();
