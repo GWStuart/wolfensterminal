@@ -160,30 +160,48 @@ float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sp
     }
     for (int spriteNum = 0; spriteNum < 1; spriteNum++) { //NEED TO CHANGE 1 TO THE NUMBER OF SPRITES
 	(*sprites)[spriteNum].distanceToPlayer = 
-	    dist((float)player->x, (float)player->y, (float)(*sprites)[spriteNum].x, (float)(*sprites)[spriteNum].x, 0);
+	    dist((float)player->x, (float)player->y, (float)(*sprites)[spriteNum].x, (float)(*sprites)[spriteNum].y, 0);
     }
     //NEED TO QSORT ARRAY BASED ON DISTANCE FROM PLAYER, FURTHEST AWAY SHOULD BE FIRST
     debug_init();
+    debug_print("degrees: %f, radians: \n", player->angle);
     for (int spriteNum = 0; spriteNum < 1; spriteNum++) { //ALSO NEED TO MAKE 1 INTO NUMBER OF SPRITES
 	int xDiff = sprites[spriteNum]->x - player->x;
 	int yDiff = sprites[spriteNum]->y - player->y;
-	float angFromPlayer = atan2(-yDiff, xDiff) * (180 / M_PI);
-	if (angFromPlayer < -180) {
-	    angFromPlayer += 360;
-	} else if (angFromPlayer > 180) {
-	    angFromPlayer -= 360;
-	}
-	int q = player->angle + (FOV / 2) - angFromPlayer;
-	if (player->angle > 90 && q < -90) {
-	    //q += 360;
-	}
-	if (player->angle < -90 && q > 90) {
-	    //q -= 360;
-	}
-	int spriteScreenX = abs((cols / FOV) * q);
+	//float angFromPlayer = atan2(-yDiff, xDiff) * (180 / M_PI);
+	//if (angFromPlayer < -180) {
+	//    angFromPlayer += 360;
+	//} else if (angFromPlayer > 180) {
+	//    angFromPlayer -= 360;
+	//}
+	//int q = player->angle + (FOV / 2) - angFromPlayer;
+	//if (player->angle > 90 && q < -90) {
+	//    q -= 360;
+	//}
+	//if (player->angle < -90 && q > 90) {
+	//    q -= 360;
+	//}
+	//int spriteScreenX = (cols / FOV) * q;
+	float dx = sprites[spriteNum]->x - player->x;
+	float dy = sprites[spriteNum]->y - player->y;
+
+	float spriteAngle = atan2(dy, dx) * (180.0f / M_PI); // angle to sprite
+	float angleDiff = spriteAngle - player->angle;
+
+	// Normalize angleDiff to [-180, 180]
+	while (angleDiff > 180) angleDiff -= 360;
+	while (angleDiff < -180) angleDiff += 360;
+
+	// Skip sprite if outside of FOV
+	if (fabs(angleDiff) > FOV / 2) continue;
+
+	// Project to screen X
+	float screenXRatio = (angleDiff + (FOV / 2)) / FOV;
+	int spriteScreenX = screenXRatio * cols;
+
 	int spriteScreenY = rows / 4;
 	int spriteDist = sqrt((xDiff * xDiff) + (yDiff * yDiff));
-	int spriteHeight = abs((rows * 64) / spriteDist);
+	int spriteHeight = (rows * 64) / spriteDist;
 	int spriteWidth = spriteHeight;
 	int startCol = spriteScreenX - spriteWidth / 2;
 	if (startCol < 0) {
@@ -193,11 +211,11 @@ float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sp
 	if (endCol > cols) {
 	    endCol = cols;
 	}
-	debug_print("ssX: %d, sW/2: %d\n", spriteScreenX, spriteWidth / 2);
+	//debug_print("ssX: %d, sW/2: %d\n", spriteScreenX, spriteWidth / 2);
 	//debug_print("startCol: %d, endCol: %d\n", startCol, endCol);
 	for (int col = startCol; col < endCol; col++) {
 	    if (zBuffer[col] > spriteDist) {
-		debug_print("col: %d, y thing: %d, size: %d\n", col, spriteScreenY - spriteWidth / 2, spriteWidth);
+		//debug_print("col: %d, y thing: %d, size: %d\n", col, spriteScreenY - spriteWidth / 2, spriteWidth);
 		render_line(col, spriteScreenY - spriteWidth / 2, spriteWidth, 'B', 1);
 	    }
 	}

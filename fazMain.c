@@ -32,8 +32,8 @@ int main()
 {
     //NEED TO MAKE THIS CODE NOT HARD CODED AND ACTUALLY WORK FOR ALL SCENARIOS
     Sprite* sprites = malloc(sizeof(Sprite) * 1);
-    sprites[0].x = 8*64;
-    sprites[0].y = 8*64;
+    sprites[0].x = 5*64;
+    sprites[0].y = 3*64;
     sprites[0].isAngled = false;
     InputDeviceStuff iDS = open_devices();
     Inputs inputs = {.forward = false,
@@ -45,6 +45,13 @@ int main()
 	.mouseX = 0};
     setup_screen();
     clear_screen();
+    start_color();
+
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(4, COLOR_BLUE, COLOR_BLACK);
+    init_pair(5, COLOR_WHITE, COLOR_BLACK);
 
     Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .curr_speed = 0, .max_speed = 5};
     //-90 is top
@@ -89,14 +96,38 @@ int main()
     printw("%d", inputs.mouseX);
     player.angle += inputs.mouseX; //UNCOMMENT IF MOUSE IS WORKING AS INTENDED
     inputs.mouseX = 0;
-    acceleration(&player, &inputs);
+    //acceleration(&player, &inputs);
+    
+    if (inputs.forward) {
+	player.x += 5*cos(TO_RAD(player.angle));
+	player.y += 5*sin(TO_RAD(player.angle));
+    }
+    if (inputs.back) {
+	player.x -= 5*cos(TO_RAD(player.angle));
+	player.y -= 5*sin(TO_RAD(player.angle));
+    }
+    if (inputs.left) {
+	player.x += 5*sin(TO_RAD(player.angle));
+	player.y -= 5*cos(TO_RAD(player.angle));
+    }
+    if (inputs.right) {
+	player.x -= 5*sin(TO_RAD(player.angle));
+	player.y += 5*cos(TO_RAD(player.angle));
+    }
+    
+    
+
     if (inputs.tLeft) {
 	player.angle--;
-	//player.angle -= TO_DEG((2*M_PI)/300);
+	if (player.angle < -180) {
+	    player.angle = 180;
+	}
     }
     if (inputs.tRight) {
 	player.angle++;
-	//player.angle += TO_DEG((2*M_PI)/300);
+	if (player.angle > 180) {
+	    player.angle = -180;
+	}
     }
     refresh();
     napms(16);
