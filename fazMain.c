@@ -46,7 +46,7 @@ int main()
     setup_screen();
     clear_screen();
 
-    Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .speed = 1.0f};
+    Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .curr_speed = 0, .max_speed = 5};
     //-90 is top
     //int map[10][10] = {
     //    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1}, 
@@ -89,22 +89,7 @@ int main()
     printw("%d", inputs.mouseX);
     player.angle += inputs.mouseX; //UNCOMMENT IF MOUSE IS WORKING AS INTENDED
     inputs.mouseX = 0;
-    if (inputs.forward) {
-	player.x += 5*cos(TO_RAD(player.angle));
-	player.y += 5*sin(TO_RAD(player.angle));
-    }
-    if (inputs.back) {
-	player.x -= 5*cos(TO_RAD(player.angle));
-	player.y -= 5*sin(TO_RAD(player.angle));
-    }
-    if (inputs.left) {
-	player.x += 5*sin(TO_RAD(player.angle));
-	player.y -= 5*cos(TO_RAD(player.angle));
-    }
-    if (inputs.right) {
-	player.x -= 5*sin(TO_RAD(player.angle));
-	player.y += 5*cos(TO_RAD(player.angle));
-    }
+    acceleration(&player, &inputs);
     if (inputs.tLeft) {
 	player.angle--;
 	//player.angle -= TO_DEG((2*M_PI)/300);
