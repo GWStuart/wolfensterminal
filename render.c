@@ -1,6 +1,7 @@
 #include <ncurses.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 uint8_t texture1[32][32] = {
     {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2},
@@ -85,7 +86,7 @@ void render_rect(int x, int y, int length, int width, chtype character) {
     }
 }
 
-void render_line_texture(int x, int y, int length, int pos, int textureNumber, bool darker) {
+void render_line_texture(int x, int y, int length, int pos, int textureNumber, bool darker, float scaleFactor, float scaleOffset) {
     char char2;
 
     int col;
@@ -99,16 +100,39 @@ void render_line_texture(int x, int y, int length, int pos, int textureNumber, b
 
     attron(COLOR_PAIR(col));
 
-    for (int i=0; i<length; i++) {
-        if (texture1[i][pos] == 0) {
+//    for (float i=0.f; i<length; i += 1/scaleFactor) {
+//	int j = (int)i;
+    //for (int i=scaleFactor * scaleOffset; i<length; i++) {
+    for (int i=-scaleFactor*scaleOffset; i<length + scaleFactor*scaleOffset; i++) {
+	int j = i;
+
+	//if (j >= 32) j %= 32;
+	if (scaleOffset != 0) {
+//	    float factooor = 32.0f / (float)(length + 0.5*scaleFactor*scaleOffset);
+//	    j = i*factooor;
+//	    j %= 32;
+	    
+	    j = (i + scaleFactor*scaleOffset) * scaleFactor;
+	    //
+
+	    //j = i*scaleFactor;
+
+
+	} else {
+	    j = i*scaleFactor;
+	}
+
+
+        if (texture1[j][pos] == 0) {
             char2 = 'X';
-        } else if (texture1[i][pos] == 1) {
+        } else if (texture1[j][pos] == 1) {
             char2 = '|';
-        } else if (texture1[i][pos] == 2) {
+        } else if (texture1[j][pos] == 2) {
             char2 = '-';
         } else {
             char2 = '+';
         }
+        //mvaddch(y + j, x, char2);
         mvaddch(y + i, x, char2);
     }
 

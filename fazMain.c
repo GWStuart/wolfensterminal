@@ -32,15 +32,15 @@
 
     int map[10][10] = {
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-	{3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
+	{1, 0, 0, 0, 0, 2, 0, 0, 0, 1}, 
+	{1, 0, 0, 0, 0, 2, 0, 0, 0, 1}, 
+	{1, 0, 0, 0, 0, 2, 0, 0, 0, 1}, 
+	{1, 0, 0, 0, 0, 0, 0, 2, 2, 1}, 
+	{1, 0, 0, 0, 0, 0, 0, 2, 0, 1}, 
+	{1, 0, 2, 2, 2, 0, 0, 2, 0, 1}, 
+	{1, 0, 2, 0, 0, 0, 0, 0, 0, 1}, 
+	{1, 0, 2, 0, 0, 0, 0, 0, 0, 1}, 
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
 int main()
@@ -70,11 +70,11 @@ int main()
     clear_screen();
     start_color();
 
-    init_pair(1, COLOR_RED, COLOR_BLACK);
-    init_pair(2, COLOR_GREEN, COLOR_BLACK);
-    init_pair(3, COLOR_YELLOW, COLOR_BLACK);
-    init_pair(4, COLOR_BLUE, COLOR_BLACK);
-    init_pair(5, COLOR_WHITE, COLOR_BLACK);
+    //init_pair(1, COLOR_RED, COLOR_BLACK);
+    //init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    //init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+    //init_pair(4, COLOR_BLUE, COLOR_BLACK);
+    //init_pair(5, COLOR_WHITE, COLOR_BLACK);
 
     Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .curr_speed = 0, .max_speed = 5};
     //-90 is top

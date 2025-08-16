@@ -111,20 +111,22 @@ float cast_ray(int (*map)[10], Player_info* player, float angle, int col, int ro
 
     // Pick the nearer hit AND its colour
     float disT, disX, disY;
-    int colour, texOffset;
+    int texOffset;
+    bool darker;
     if (disV < disH) {
 	disX = vx;
 	disY = vy;
         disT = disV;
 	texOffset = ((int)disY % 64) / 2;
-        colour = colourV;
+	darker = true;
     } else {
 	disX = hx;
 	disY = hy;
         disT = disH;
 	texOffset = ((int)disX % 64) / 2;
-        colour = colourH;
+	darker = false;
     }
+    debug_print("texOffset %d\n", texOffset);
 
     // Fish-eye correction
     float radPAngle = player->angle * (M_PI / 180.0f);
@@ -136,13 +138,21 @@ float cast_ray(int (*map)[10], Player_info* player, float angle, int col, int ro
     // Project and draw
     float denom = (disT > 1e-6f) ? disT : 1e-6f;
     int lineH = (int)fabsf((TILE * rows) / denom);
-    if (lineH > rows) lineH = rows;
+    //float scaleFactor = (float)lineH / 32.0f;
+    float scaleFactor = 32.0f / (float)lineH;
+    float scaleOffset = 0;
+    if (lineH > rows) {
+	scaleOffset = (lineH - rows) / 2.0;
+	lineH = rows;
+    }
 
     int drawX = col;
     int lineOffset = (rows / 2) - (lineH >> 1);
 
     //render_line(drawX, lineOffset, lineH, '#', texOffset % 5 + 1);
-    render_line_texture(drawX, lineOffset, lineH, texOffset, 1);
+    render_line_texture(drawX, lineOffset, lineH, texOffset, 1, darker, scaleFactor, scaleOffset);
+
+
 
     return disT;
 }
