@@ -1,0 +1,265 @@
+//compile with:
+//gcc -o karMain karMain.c 3dEngine.c render.c input.c player_info.c serverClient/protocol.c debug/debug.c -lm -lncurses
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <signal.h>
+
+
+#include "serverClient/protocol.h"
+#include "3dEngine.h"
+#include "render.h"
+#include "input.h"
+#include "player_info.h"
+#include "sprite.h"
+#include "debug/debug.h"
+
+#include <math.h>
+#include <stdbool.h>
+
+#define TO_RAD(deg) (deg * (M_PI / 180.0f))
+#define TO_DEG(rad) (rad * (180.0f / M_PI))
+#define PORT 8080
+#define LOCALHOST "127.0.0.1"
+
+static volatile int running = 1;
+static void on_sigint(int sig) {
+    (void)sig;
+    printf("killed client. guess who's angry now\n");
+    printf("I... am dying....\n");
+    running = 0;
+
+}
+
+    //int map[10][10] = {
+    //    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
+    //    {2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
+    //    {2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
+    //    {2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
+    //    {2, 0, 0, 0, 0, 0, 2, 2, 2, 4}, 
+    //    {2, 0, 0, 0, 0, 0, 3, 0, 0, 4}, 
+    //    {2, 1, 1, 1, 0, 0, 3, 0, 0, 4}, 
+    //    {2, 0, 0, 0, 0, 0, 3, 0, 0, 4}, 
+    //    {2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
+    //    {3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
+    //};
+
+
+    int map[10][10] = {
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
+	{1, 0, 0, 0, 0, 2, 0, 0, 0, 1}, 
+	{1, 0, 0, 0, 0, 2, 0, 0, 0, 1}, 
+	{1, 0, 0, 0, 0, 2, 0, 0, 0, 1}, 
+	{1, 0, 0, 0, 0, 0, 0, 2, 2, 1}, 
+	{1, 0, 0, 0, 0, 0, 0, 2, 0, 1}, 
+	{1, 0, 2, 2, 2, 0, 0, 2, 0, 1}, 
+	{1, 0, 2, 0, 0, 0, 0, 0, 0, 1}, 
+	{1, 0, 2, 0, 0, 0, 0, 0, 0, 1}, 
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+    };
+
+int main()
+{
+    //CLIENT CODE, PROBABLY VERY FRAGILE.
+    signal(SIGINT, on_sigint);
+    int delay = 0;
+    int clientFd;
+    struct sockaddr_in servaddr;
+    clientFd = socket(AF_INET, SOCK_DGRAM, 0);
+    // Create UDP socket
+    if(clientFd == -1) {
+	perror("bumass client failed");
+	return -1;
+    }
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    inet_pton(AF_INET, LOCALHOST, &servaddr.sin_addr);
+    socklen_t addrlen = sizeof(servaddr);
+    Player myPlayer = {0};
+    Public myPdata = {.id = -1, .x = 10, .y = 20, .angle = 0};
+
+    myPlayer.pdata = myPdata;
+    myPlayer.health = 100;
+    myPlayer.speed = 1.0f;
+    send_message(clientFd, &servaddr, addrlen, CLIENT_HELLO, -1, (uint8_t*)&myPlayer,sizeof(Player));
+
+    MessageHeader header;
+    uint8_t payload[65507];
+    int dataSize = recv_message(clientFd, &header, payload, sizeof(payload), &servaddr, &addrlen);
+
+    if(dataSize <= 0 || header.operation != SERVER_WELCOME) {
+	fprintf(stderr, "the server said bumass: go away\n");
+	return 1;
+    }
+    WelcomePayload message;
+    memset(&message, 0, sizeof(message));
+    memcpy(&message, payload, dataSize);
+    myPlayer.pdata.id = message.assigned_id;
+    printf("listen buddy, server gonna give you only one thing: %u\n", myPlayer.pdata.id);
+    printf("oh yeah this is where you live: \n%.*s",(int)message.map_size, (const char*)message.map_bytes);
+   Public others[MAX_PLAYERS];
+   //SERVER CODE DONE. THIS IS ONE BIG ASS MAIN FILE
+
+
+   //normal faz code
+
+    //NEED TO MAKE THIS CODE NOT HARD CODED AND ACTUALLY WORK FOR ALL SCENARIOS
+    debug_init();
+    int numSprites = 3;
+    Sprite* sprites = malloc(sizeof(Sprite) * numSprites);
+    sprites[0].x = 5*64;
+    sprites[0].y = 3*64;
+    sprites[0].isAngled = false;
+    sprites[1].x = 2*64;
+    sprites[1].y = 2*64;
+    sprites[1].isAngled = false;
+    sprites[2].x = 3*64;
+    sprites[2].y = 5*64;
+    sprites[2].isAngled = false;
+    InputDeviceStuff iDS = open_devices();
+    Inputs inputs = {.forward = false,
+	.back = false,
+	.left = false,
+	.right = false,
+	.tRight = false,
+	.tLeft = false,
+	.mouseX = 0};
+    setup_screen();
+    clear_screen();
+    start_color();
+
+    //init_pair(1, COLOR_RED, COLOR_BLACK);
+    //init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    //init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+    //init_pair(4, COLOR_BLUE, COLOR_BLACK);
+    //init_pair(5, COLOR_WHITE, COLOR_BLACK);
+
+    Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .curr_speed = 0, .max_speed = 5};
+    //-90 is top
+    //int map[10][10] = {
+    //    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
+    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+    //};
+    int rows, cols;
+    getmaxyx(stdscr, rows, cols);
+    //wmove(stdscr, 0, 0);
+    while (running == 1) {
+	getmaxyx(stdscr, rows, cols);
+
+	clear_screen();
+
+	float FOV = 70.0f; // degrees
+	float FOV_RAD = FOV * (M_PI / 180.0f);
+
+	sprites[0].x += 5;
+
+	draw_all_stuff(map, &player, cols, rows, &sprites, numSprites);  // Pass exact screen column
+
+
+//
+//    for (int i = cols/2; i > -cols/2; i -= cols/70) {
+//	cast_ray(map, &player, player.angle + i);
+//    }
+    //for (int i = -cols/2; i < cols/2; i++) {
+    //    cast_ray(map, &player, player.angle + i);
+    //}
+    refresh();
+    //player.angle++;
+    //inputs.mouseX = 0;
+    detect_input(&iDS, &inputs);
+    //debug_print("mouseX: %d\n", inputs.mouseX);
+    player.angle += inputs.mouseX; //UNCOMMENT IF MOUSE IS WORKING AS INTENDED
+    if (player.angle < -180) {
+	player.angle += 360;
+    } else if (player.angle > 180) {
+	player.angle -= 360;
+    }
+    inputs.mouseX = 0;
+    //acceleration(&player, &inputs);
+    
+    if (inputs.forward) {
+	//player.x += 5*cos(TO_RAD(player.angle));
+	//player.y += 5*sin(TO_RAD(player.angle));
+	if (map[((player.y + (int)(20*sin(TO_RAD(player.angle)))) >> 6)][((player.x + (int)(20*cos(TO_RAD(player.angle)))) >> 6)] == 0) {
+	    player.x += 5*cos(TO_RAD(player.angle));
+	    player.y += 5*sin(TO_RAD(player.angle));
+	}
+    }
+    if (inputs.back) {
+	if (map[((player.y - (int)(20*sin(TO_RAD(player.angle)))) >> 6)][((player.x - (int)(20*cos(TO_RAD(player.angle)))) >> 6)] == 0) {
+	    player.x -= 5*cos(TO_RAD(player.angle));
+	    player.y -= 5*sin(TO_RAD(player.angle));
+	}
+    }
+    if (inputs.left) {
+	if (map[((player.y - (int)(20*cos(TO_RAD(player.angle)))) >> 6)][((player.x + (int)(20*sin(TO_RAD(player.angle)))) >> 6)] == 0) {
+	    player.x += 5*sin(TO_RAD(player.angle));
+	    player.y -= 5*cos(TO_RAD(player.angle));
+	}
+    }
+    if (inputs.right) {
+	if (map[((player.y + (int)(20*cos(TO_RAD(player.angle)))) >> 6)][((player.x - (int)(20*sin(TO_RAD(player.angle)))) >> 6)] == 0) {
+	    player.x -= 5*sin(TO_RAD(player.angle));
+	    player.y += 5*cos(TO_RAD(player.angle));
+	}
+    }
+    
+    
+
+    if (inputs.tLeft) {
+	player.angle--;
+	if (player.angle < -180) {
+	    player.angle = 180;
+	}
+    }
+    if (inputs.tRight) {
+	player.angle++;
+	if (player.angle > 180) {
+	    player.angle = -180;
+	}
+    }
+
+
+    //CLIENT CODE, INCREDIBLY FRAGILE
+    memcpy(&myPlayer.pdata.x, &player.x, sizeof(int));
+    memcpy(&myPlayer.pdata.y, &player.y, sizeof(int));
+    memcpy(&myPlayer.pdata.angle, &player.angle, sizeof(float));
+    //AGAIN, THIS IS SERVER CODE. CONSIDER THIS INCREDIBLY FRAGILE IF TRYING TO CHANGE
+    send_message(clientFd, &servaddr, addrlen, CLIENT_UPDATE, myPlayer.pdata.id, &myPlayer, sizeof(Player));
+
+       MessageHeader snapshot;
+       struct sockaddr_in from;
+       socklen_t flen = sizeof(from);
+       int r = recv_message(clientFd, &snapshot, payload, sizeof(payload), &from, &flen);
+       if(r > 0 && snapshot.operation == SERVER_SNAPSHOT){
+	   uint16_t count = 0;
+	   memcpy(&count, payload, sizeof(count));
+	   size_t n = count;
+	   if (n > MAX_PLAYERS){
+	       n = MAX_PLAYERS;
+	   }
+	   memcpy(others, payload + sizeof(count), n*sizeof(Public));
+       }
+
+
+    refresh();
+    napms(16);
+	//player.y--;
+	//sleep(1);
+    }
+    send_message(clientFd, &servaddr, addrlen, CLIENT_DISCONNECT, myPlayer.pdata.id, &myPlayer, sizeof(Player));
+    close(clientFd);
+    getch();
+    return 0;
+}
