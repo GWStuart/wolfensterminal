@@ -14,6 +14,6 @@ struct Player {
 
 //float cast_ray(int (*map)[10], Player_info* player, int angle, int col, int rows);
 
-float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sprite** sprites, int numSprites);
+float draw_all_stuff(int (*map)[20], Player_info* player, int cols, int rows, Sprite** sprites, int numSprites);
 #endif
 

@@ -32,9 +32,9 @@ float dist(float ax, float ay, float bx, float by, float ang) {
     return (sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)));
 }
 
-float cast_ray(int (*map)[10], Player_info* player, float angle, int col, int rows)
+float cast_ray(int (*map)[20], Player_info* player, float angle, int col, int rows)
 {
-    const int MAP_W = 10, MAP_H = 10;
+    const int MAP_W = 20, MAP_H = 20;
     const float TILE = 64.0f;
     const float EPS = 0.0001f;
 
@@ -158,7 +158,7 @@ float cast_ray(int (*map)[10], Player_info* player, float angle, int col, int ro
 }
 
 
-float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sprite** sprites, int numSprites)
+float draw_all_stuff(int (*map)[20], Player_info* player, int cols, int rows, Sprite** sprites, int numSprites)
 {
     // 1) Build z-buffer by casting rays per column
     float zBuffer[cols];
@@ -249,14 +249,82 @@ float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sp
                 // If you later texture sprites, you’ll sample the correct column instead of drawing a solid.
                 //render_line(col, startRow, spriteHeight, 'B', 1);
 		//render_player(col, startRow, col*(14.0f / (float)totalCols), spriteHeight);
-		int texW = 14;                      // your sprite texture width in columns (was hard-coded 14.0)
+		int texW;                      // your sprite texture width in columns (was hard-coded 14.0)
+		switch(s->spriteType) {
+		    case S_GUY:
+			texW = 14;
+			break;
+		    case S_SGUN:
+			texW = 49;
+			break;
+		}
 		int rel = col - startCol;           // 0 .. totalCols-1
 		// Map 0..totalCols-1 -> 0..texW-1 with rounding & clamping
 		int texX = (int)roundf(rel * (texW - 1) / (float)(totalCols - 1));
 		if (texX < 0) texX = 0;
 		if (texX >= texW) texX = texW - 1;
 
-		render_player(col, startRow, texX, spriteHeight);
+		//switch(s->spriteType) {
+		//    case S_GUY:
+		//	render_player(col, startRow, texX, spriteHeight);
+		//	break;
+		//    case S_SGUN:
+		//	render_shotgun(col, startRow, texX, spriteHeight / 4);
+		//	break;
+		//}
+
+		switch(s->spriteType) {
+		   case S_GUY: {
+			// normal projected size
+			int spriteHeight = (int)((rows * 64.0f) / spriteDist);
+			int spriteWidth  = spriteHeight;
+			if (spriteWidth  < 1) spriteWidth  = 1;
+			if (spriteHeight < 1) spriteHeight = 1;
+			if (spriteHeight > rows) spriteHeight = rows;
+
+			int startRow = rows/2 - spriteHeight/2;
+			if (startRow < 0) startRow = 0;
+
+			int rel = col - startCol;
+			int texX = (int)roundf(rel * (texW - 1) / (float)(totalCols - 1));
+			if (texX < 0) texX = 0;
+			if (texX >= texW) texX = texW - 1;
+
+			render_player(col, startRow, texX, spriteHeight);
+			break;
+		   }
+
+		    case S_SGUN: {
+		        // Softer scaling so it doesn’t explode at close range
+		        int spriteHeight = (int)((rows * 32.0f) / (spriteDist + 32));
+		        int spriteWidth  = spriteHeight * 2;  // shotgun shape
+		        if (spriteWidth  < 1) spriteWidth  = 1;
+		        if (spriteHeight < 1) spriteHeight = 1;
+
+		        // Compute floor anchor per column (use your wall slice height here!)
+		        int spriteLineH = (int)(rows / spriteDist);
+		        int wallBottom = (rows / 2) + (spriteLineH / 2);
+		        if (wallBottom > rows) wallBottom = rows;
+
+		        if (wallBottom > rows) wallBottom = rows;
+
+		        // Anchor shotgun to the floor
+		        int startRow = wallBottom - spriteHeight;
+
+		        // Texture mapping
+		        int rel = col - startCol;
+		        int texW = 49; // shotgun texture width
+		        int texX = (int)roundf(rel * (texW - 1) / (float)(totalCols - 1));
+		        if (texX < 0) texX = 0;
+		        if (texX >= texW) texX = texW - 1;
+
+		        render_shotgun(col, startRow, texX, spriteHeight);
+		        break;
+		    }
+
+
+		}
+
 
             }
         }

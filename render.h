@@ -32,4 +32,6 @@ void render_line_texture(int x, int y, int length, int pos, int textureNumber, b
 
 void render_player(int x, int y, int column, int height);
 
+void render_shotgun(int x, int y, int column, int height);
+
 #endif
