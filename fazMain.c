@@ -128,20 +128,30 @@ int main()
     //acceleration(&player, &inputs);
     
     if (inputs.forward) {
-	player.x += 5*cos(TO_RAD(player.angle));
-	player.y += 5*sin(TO_RAD(player.angle));
+	//player.x += 5*cos(TO_RAD(player.angle));
+	//player.y += 5*sin(TO_RAD(player.angle));
+	if (map[((player.y + (int)(20*sin(TO_RAD(player.angle)))) >> 6)][((player.x + (int)(20*cos(TO_RAD(player.angle)))) >> 6)] == 0) {
+	    player.x += 5*cos(TO_RAD(player.angle));
+	    player.y += 5*sin(TO_RAD(player.angle));
+	}
     }
     if (inputs.back) {
-	player.x -= 5*cos(TO_RAD(player.angle));
-	player.y -= 5*sin(TO_RAD(player.angle));
+	if (map[((player.y - (int)(20*sin(TO_RAD(player.angle)))) >> 6)][((player.x - (int)(20*cos(TO_RAD(player.angle)))) >> 6)] == 0) {
+	    player.x -= 5*cos(TO_RAD(player.angle));
+	    player.y -= 5*sin(TO_RAD(player.angle));
+	}
     }
     if (inputs.left) {
-	player.x += 5*sin(TO_RAD(player.angle));
-	player.y -= 5*cos(TO_RAD(player.angle));
+	if (map[((player.y - (int)(20*cos(TO_RAD(player.angle)))) >> 6)][((player.x + (int)(20*sin(TO_RAD(player.angle)))) >> 6)] == 0) {
+	    player.x += 5*sin(TO_RAD(player.angle));
+	    player.y -= 5*cos(TO_RAD(player.angle));
+	}
     }
     if (inputs.right) {
-	player.x -= 5*sin(TO_RAD(player.angle));
-	player.y += 5*cos(TO_RAD(player.angle));
+	if (map[((player.y + (int)(20*cos(TO_RAD(player.angle)))) >> 6)][((player.x - (int)(20*sin(TO_RAD(player.angle)))) >> 6)] == 0) {
+	    player.x -= 5*sin(TO_RAD(player.angle));
+	    player.y += 5*cos(TO_RAD(player.angle));
+	}
     }
     
     
