@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#define LEVEL_DIR "Levels/"
 #define MAX_LENGTH_FILE_NAME 256
 #define LEVEL_DIR "Levels/"
 #define LEVEL_EXT ".txt"
@@ -187,9 +188,12 @@ void map_edit(Level *level) {
             char path[MAX_PATH_LENGTH];
             
             // Get filename using our new safe function
-            get_string_from_user(level->height + 3, 0, "Save Filename: ", file_name, sizeof(file_name));
+            get_string_from_user(level->height + 3, 0, "Save Filename ('q' + Enter to Quit): ", file_name, sizeof(file_name));
             
             if (strlen(file_name) > 0) {
+                if (strcmp(file_name, "q") == 0) {
+                    continue;    
+                }
                 snprintf(path, sizeof(path), LEVEL_DIR "%s" LEVEL_EXT, file_name);
                 if (save_level(path, level)) {
                     mvprintw(level->height + 4, 0, "Saved to \"%s\". Press any key.", path);
@@ -202,9 +206,12 @@ void map_edit(Level *level) {
             char file_name[MAX_LENGTH_FILE_NAME] = {0};
             char path[MAX_PATH_LENGTH];
 
-            get_string_from_user(level->height + 3, 0, "Load Filename: ", file_name, sizeof(file_name));
+            get_string_from_user(level->height + 3, 0, "Load Filename ('q' + Enter to Quit): ", file_name, sizeof(file_name));
 
             if (strlen(file_name) > 0) {
+                if (strcmp(file_name, "q") == 0) {
+                    continue;    
+                }
                 snprintf(path, sizeof(path), LEVEL_DIR "%s" LEVEL_EXT, file_name);
                 Level* loaded = load_level(path);
                 if (loaded) {
@@ -212,7 +219,7 @@ void map_edit(Level *level) {
                     free(level->grid);
                     *level = *loaded;
                     free(loaded);
-                    mvprintw(level->height + 4, 0, "Loaded from \"%s\". Press any key.", path);
+                    mvprintw(level->height + 4, 0, "Loaded from \"%s\". Press any key to view level.", path);
                 } else {
                     mvprintw(level->height + 4, 0, "File not found: \"%s\". Press any key.", path);
                 }

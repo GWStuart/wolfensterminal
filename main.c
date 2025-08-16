@@ -42,7 +42,6 @@ int main() {
         render_screen(player);     // draw the player on top
 
         refresh();
-        usleep(100000);
     }
 
     // Clean up
