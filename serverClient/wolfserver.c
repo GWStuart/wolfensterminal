@@ -9,130 +9,113 @@
 #include <pthread.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "protocol.h"
 
 #define MAX_PLAYERS 5
 #define CORRECT_PREFIX 0x56561111
+#define NEW_PLAYER 1 //server sending new player information
+#define UPDATE_PLAYERS 2 //server sending updated players
+#define CLIENT_UPDATE 3 //client updating server
+#define DISCONNECT 4 // client telling server they are disconnecting
 
-typedef struct {
-    uint32_t prefix;
-    uint8_t operation;
-    uint32_t dataSize;
-    uint8_t* data;
-    // come back here, you need to add the part where the id returns when the player is new
-} Message;
-
-typedef struct { 
-    int id;
-    int x;
-    int y;
-    float angle;
-    float speed;
-    int health;
-    struct sockaddr_in connection;
-} Player;
 
 typedef struct {
     Player* playerList;
     int listSize;
 } connectionList;
 
-int recieve_message(int sockfd, Message *message, struct sockaddr_in *from, 
-	socklen_t *fromlen){
-    uint8_t buffer[BUFSIZ];
-    int n = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)from,
-	    fromlen);
-    if(n < (int)(sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint32_t))){
-	perror("this message has a small member");
-	return -1;
-    }
-    uint32_t prefix = le32toh(*(uint32_t*)(buffer));
-    if(prefix != 0x56561111){
-	perror("the prefix is wrong, this guy is a faker");
-	return -1;
-    }
-
-    message->prefix = prefix;
-    message->operation = le32toh(*(uint8_t*)(buffer + sizeof(uint32_t)));
-    message->dataSize = le32toh(*(uint32_t*)(buffer + sizeof(uint32_t) + sizeof(uint8_t)));
-    if(message->dataSize > n-sizeof(uint8_t)+2*sizeof(uint32_t)){
-	perror("bumass client/server tried to send a file that was too large");
-	return -1;
-    }
-    message->data = malloc(message->dataSize);
-    memcpy(message->data, buffer +sizeof(uint8_t)+2*sizeof(uint32_t), message->dataSize);
-    return 0;
-}
-
-int send_message(int sockfd, struct sockaddr_in *to, socklen_t tolen, uint8_t operation,
-	uint32_t dataSize, uint8_t* data){
-    Message message = {0};
-    message.prefix = htole32(CORRECT_PREFIX);
-    message.operation = operation;
-    message.dataSize = htole32(dataSize);
-    memcpy(message.payload, data, dataSize);
-    return sendto(sockfd, &message,
-                  sizeof(message.prefix) + sizeof(message.operation) +
-                  sizeof(message.dataSize) + dataSize,
-                  0, (struct sockaddr*)to, tolen);
-}
 
 void* handle_data(int sockfd) {
     struct sockaddr_in clientaddr;
     socklen_t addr_len = sizeof(clientaddr);
-    connectionList players;
+    connectionList players = {0};
     players.listSize = 0;
+    int index = 0;
 
     while (1) {
-	char buffer[BUFSIZ];
-	int n = recvfrom(sockfd, buffer, BUFSIZ, 0, (struct sockaddr*)&clientaddr, &addr_len);
-	if(n>0) {
+	index++;
+	Message msg = {0};
+	if(recieve_message(sockfd, &msg, &clientaddr, &addr_len) == 0){
 	    int playerID = -1;
 	    for(int i = 0; i<players.listSize; i++){
 		if(!memcmp(&players.playerList[i].connection, &clientaddr, sizeof(clientaddr))){
-			playerID = i;
-			break;
+		    playerID = i;
+		    break;
 		}
 	    }
-	    if(playerID == -1){
-		players.listSize++;
-		players.playerList = realloc(players.playerList, sizeof(Player)*players.listSize);
-		Player newPlayer = { .id = players.listSize-1, .x = 0, .y = 0, .angle = 0.6, .speed = 6.9, .health = 100, .connection = clientaddr};
-		players.playerList[players.listSize-1] = newPlayer;
-		const char *mapData = "deez nuts bumass client temp mapdata pretend I sent it to you";
-		sendto(sockfd, mapData, strlen(mapData), 0, (struct sockaddr *)&clientaddr, 
-		    addr_len);
+	    switch(msg.operation) {
+		case CLIENT_UPDATE: 
+		
+		if(playerID == -1){
+		    //perform sending map data, probably from a file of some sort
+		    //this is temp code.
+		    printf("shuf\n");
+		    players.listSize++;
+		    players.playerList = realloc(players.playerList, sizeof(Player)*players.listSize);
+		    Player newPlayer = {0};
+	            memcpy(&newPlayer, msg.data, sizeof(Player));
+		    newPlayer.pdata.id = players.listSize;
+		    players.playerList[players.listSize-1] = newPlayer;
+		    players.playerList[players.listSize-1].connection = clientaddr;
 
-	    } else if(!strncmp(buffer, "it all over now", 15)){ //player leave game
-		int playerID;  
-		sscanf(buffer, "%d", &playerID);
-		if(playerID != players.listSize-1){
-    		    for(int i = playerID; i<players.listSize-1; i++){
-			players.playerList[i] = players.playerList[i+1];
-		    }
+
+		    const char *mapData = "deez nuts bumass client temp mapdata pretend I sent it to you";
+		    send_message(sockfd, &clientaddr, addr_len, 1, sizeof(mapData), (uint8_t*)mapData, newPlayer.pdata.id);
+		    //additionally, need to send the id as well
+
+		} else { //the message sent was an existing player
+		    Player newPlayer = {0};
+	            memcpy(&newPlayer, msg.data, sizeof(Player));
+		    players.playerList[playerID] = newPlayer;
+		    players.playerList[playerID].connection = clientaddr;
 		}
-		players.listSize--;
-		players.playerList = realloc(players.playerList, sizeof(Player)*players.listSize);
-	    } else {
-		Player updatePlayer = players.playerList[playerID];
-		sscanf(buffer, "%d %d %d %f %f %d", 
-			&updatePlayer.id, &updatePlayer.x, &updatePlayer.y, &updatePlayer.angle, &updatePlayer.speed, &updatePlayer.health);
+		break;
+				    
+		case DISCONNECT: 
+		    if(playerID != players.listSize-1){
+			for(int i = playerID; i<players.listSize-1; i++){
+			    players.playerList[i] = players.playerList[i+1];
+			}
+		    }
+		    players.playerList = realloc(players.playerList, sizeof(Player)*players.listSize);
+		    break;
 	    }
-	    char states[BUFSIZ];
-	    int offset = 0;
-	    for(int i = 0; i < players.listSize; i++){
-		Player currPlayer = players.playerList[i];
-		offset += sprintf(states + offset,
-			"%d %d %d %f",
-			currPlayer.id, currPlayer.x, currPlayer.y, currPlayer.angle);
+
+	    //sending updates to everysingle player, using only relevant information.
+
+	    fflush(stdout);
+	    if(players.listSize != 0){
+		Public* pdatas = malloc(sizeof(Public)*players.listSize);
+		for(int i = 0; i<players.listSize; i++){
+		    pdatas[i] = players.playerList[i].pdata;
+		}
+		for(int i = 0; i<players.listSize; i++){
+			send_message(sockfd, &players.playerList[i].connection, addr_len, UPDATE_PLAYERS, sizeof(Public)*players.listSize, (uint8_t*)pdatas, players.listSize);
+		}
+
+		free(pdatas);
 	    }
-	    for(int i = 0; i< players.listSize; i++){
-		Player currPlayer = players.playerList[i];
-		sendto(sockfd, states, strlen(states), 0,
-                           (struct sockaddr *)&currPlayer.connection,
-                           sizeof(currPlayer.connection));
+
+
+	    if(!index%1000){
+		index = 0;
+		if(players.listSize == 0){
+		    printf("bum ass\n");
+		}
+
+		for(int i = 0; i<players.listSize; i++) {
+		    Player curPlayer = players.playerList[i];
+		    printf("ID: %d, x: %d, y: %d, angle: %f, health: %d, speed: %f\n",
+			    curPlayer.pdata.id, curPlayer.pdata.x, curPlayer.pdata.y, curPlayer.pdata.angle, curPlayer.health, curPlayer.speed);
+		}
+		fflush(stdout);
+
 	    }
+	    
+	    free(msg.data);
 	}
     }
+    free(players.playerList);
     close(sockfd);
     return NULL;
 }
