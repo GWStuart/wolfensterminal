@@ -36,8 +36,8 @@ void update_player_pos(Player_info* P_info){
 
 }
 */
-void acceleration(Player_info* player, Inputs* inputs) {
 
+void acceleration(Player_info* player, Inputs* inputs) {
     int target_speed = 0; //default is 0, will decelerate into 0 if theres no input
     if (inputs->forward || inputs->back || inputs->left || inputs->right) {
         player->curr_speed = 1;
@@ -45,28 +45,31 @@ void acceleration(Player_info* player, Inputs* inputs) {
     }
 
     float accel_factor = 0;
-    if(target_speed != 0){
-        accel_factor = 1.10; 
+    if (player->curr_speed == target_speed){
+        accel_factor = 1;
     }
+    if(target_speed != 0){
+        accel_factor = 1.05; 
+    } 
     else{
         accel_factor = 0.001;
     }
    
 
     if (inputs->forward) {
-	    player->x += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
-	    player->y += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+	    player->x += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+	    player->y += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
     }
     if (inputs->back) {
-	    player->x -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
-	    player->y -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
-    }
-    if (inputs->left) {
-	    player->x += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+	    player->x -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
 	    player->y -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
     }
+    if (inputs->left) {
+	    player->x += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+	    player->y -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
+    }
     if (inputs->right) {
-	    player->x -= player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
-	    player->y += player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+	    player->x -= player->curr_speed*sin(TO_RAD(player->angle))*accel_factor;
+	    player->y += player->curr_speed*cos(TO_RAD(player->angle))*accel_factor;
     }
 }
