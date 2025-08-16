@@ -8,6 +8,12 @@
 #include "player_info.h"
 #include "sprite.h"
 #include "debug/debug.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include "serverClient/protocol.h"
+#include <signal.h>
 
 #include <unistd.h>
 #include <math.h>
@@ -15,6 +21,18 @@
 
 #define TO_RAD(deg) (deg * (M_PI / 180.0f))
 #define TO_DEG(rad) (rad * (180.0f / M_PI))
+
+#define PORT 8080
+#define LOCALHOST "10.89.240.40"
+
+static volatile int running = 1;
+static void on_sigint(int sig) {
+    (void)sig;
+    printf("killed client. guess who's angry now\n");
+    printf("I... am dying....\n");
+    running = 0;
+
+}
 
     //int map[10][10] = {
     //    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
@@ -55,10 +73,63 @@
 
 int main()
 {
+
+    size_t n = 0;
+    size_t nOld = 0;
+    //bad code
+    signal(SIGINT, on_sigint);
+    //int delay = 0;
+    //if(argc == 1){ //tempCode
+    //    delay = 200;
+    //} else {
+    //    delay = atoi(argv[1]);
+    //}
+    int clientFd;
+    struct sockaddr_in servaddr;
+    clientFd = socket(AF_INET, SOCK_DGRAM, 0);
+    // Create UDP socket
+    if(clientFd == -1) {
+	perror("bumass client failed");
+	return -1;
+    }
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    inet_pton(AF_INET, LOCALHOST, &servaddr.sin_addr);
+    socklen_t addrlen = sizeof(servaddr);
+    Player myPlayer = {0};
+    Public myPdata = {.id = -1, .x = 10, .y = 20, .angle = 0};
+
+    myPlayer.pdata = myPdata;
+    myPlayer.health = 100;
+    myPlayer.speed = 1.0f;
+    send_message(clientFd, &servaddr, addrlen, CLIENT_HELLO, -1, (uint8_t*)&myPlayer,sizeof(Player));
+
+    MessageHeader header;
+    uint8_t payload[65507];
+    int dataSize = recv_message(clientFd, &header, payload, sizeof(payload), &servaddr, &addrlen);
+
+    if(dataSize <= 0 || header.operation != SERVER_WELCOME) {
+	fprintf(stderr, "the server said bumass: go away\n");
+	return 1;
+    }
+    WelcomePayload message;
+    memset(&message, 0, sizeof(message));
+    memcpy(&message, payload, dataSize);
+    myPlayer.pdata.id = message.assigned_id;
+    printf("listen buddy, server gonna give you only one thing: %u\n", myPlayer.pdata.id);
+    printf("oh yeah this is where you live: \n%.*s",(int)message.map_size, (const char*)message.map_bytes);
+   Public others[MAX_PLAYERS];
+
+
+
+
+
     //NEED TO MAKE THIS CODE NOT HARD CODED AND ACTUALLY WORK FOR ALL SCENARIOS
     debug_init();
     int numSprites = 3;
     Sprite* sprites = malloc(sizeof(Sprite) * numSprites);
+    Sprite* players;
+    Sprite* allSprites;
     sprites[0].x = 5*64;
     sprites[0].y = 3*64;
     sprites[0].isAngled = false;
@@ -70,7 +141,7 @@ int main()
     sprites[2].x = 3*64;
     sprites[2].y = 5*64;
     sprites[2].isAngled = false;
-    sprites[0].spriteType = S_SGUN;
+    sprites[2].spriteType = S_SGUN;
     InputDeviceStuff iDS = open_devices();
     Inputs inputs = {.forward = false,
 	.back = false,
@@ -106,7 +177,7 @@ int main()
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
     //wmove(stdscr, 0, 0);
-    while (1) {
+    while (running) {
 	getmaxyx(stdscr, rows, cols);
 
 	clear_screen();
@@ -116,7 +187,16 @@ int main()
 
 	sprites[0].x += 5;
 
-	draw_all_stuff(map, &player, cols, rows, &sprites, numSprites);  // Pass exact screen column
+	allSprites = realloc(allSprites, sizeof(Sprite) * (numSprites + n));
+
+	for (int i = 0; i < numSprites; i++) {
+	    allSprites[i] = sprites[i];
+	}
+	for (size_t i = (size_t)numSprites; i < (size_t)numSprites + n; i++) {
+	    allSprites[i] = players[i - (size_t)numSprites];
+	}
+
+	draw_all_stuff(map, &player, cols, rows, &allSprites, numSprites + (int)n);  // Pass exact screen column
 
 
 //
@@ -181,11 +261,61 @@ int main()
 	    player.angle = -180;
 	}
     }
+
+
+    memcpy(&myPlayer.pdata.x, &player.x, sizeof(int));
+    memcpy(&myPlayer.pdata.y, &player.y, sizeof(int));
+    memcpy(&myPlayer.pdata.angle, &player.angle, sizeof(int));
+
+    send_message(clientFd, &servaddr, addrlen, CLIENT_UPDATE, myPlayer.pdata.id, &myPlayer, sizeof(Player));
+
+    MessageHeader snapshot;
+    struct sockaddr_in from;
+    socklen_t flen = sizeof(from);
+    int r = recv_message(clientFd, &snapshot, payload, sizeof(payload), &from, &flen);
+    if(r > 0 && snapshot.operation == SERVER_SNAPSHOT){
+        uint16_t count = 0;
+        memcpy(&count, payload, sizeof(count));
+        n = count;
+        if (n > MAX_PLAYERS){
+            n = MAX_PLAYERS;
+        }
+	if (n > nOld) {
+	    players = realloc(sprites, sizeof(Sprite) * n);
+	}
+	nOld = n;
+        memcpy(others, payload + sizeof(count), n*sizeof(Public));
+
+	for (size_t i = 0; i < n; i++) {
+	    players[i].x = others[i].x;
+	    players[i].y = others[i].y;
+	    players[i].spriteType = S_GUY;
+	}
+
+        //for(size_t i = 0; i<n; i++) {
+        //    printf(" [id=%u x=%d y=%d a=%.2f]", others[i].id, others[i].x, others[i].y, others[i].angle);
+        //}
+        //if(n != 0){
+
+        //    printf("\n");
+
+        //}
+        // if(n == 0 && !funnyCheck) {
+        //    printf("lonely ahh bum ahh client\n");
+        //    funnyCheck++;
+        //    }
+        }
+
+    //usleep(delay*1000);
+    
+
     refresh();
     napms(16);
 	//player.y--;
 	//sleep(1);
     }
-    getch();
+    send_message(clientFd, &servaddr, addrlen, CLIENT_DISCONNECT, myPlayer.pdata.id, &myPlayer, sizeof(Player));
+    close(clientFd);
     return 0;
 }
+
