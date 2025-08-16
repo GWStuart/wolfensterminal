@@ -56,6 +56,10 @@ void acceleration(Player_info* player, Inputs* inputs){
 	    player->x -= player->curr_speed*sin(TO_RAD(player.angle));
 	    player->y += player->curr_speed*cos(TO_RAD(player.angle));
     }
+    //if moving, no inputs, decelerate, does not depend on any key presses
+    if (P_info->curr_speed != 0 && !keysPressed){
+        P_info->curr_speed -= 0.1; 
+    }
     
 }
 
