@@ -3,12 +3,12 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include "protocol.h"
 
 #define PORT 8080
 
 int main(){
     int clientFd;
-    char buffer[BUFSIZ];
     struct sockaddr_in servaddr;
     clientFd = socket(AF_INET, SOCK_DGRAM, 0);
     // Create UDP socket
@@ -19,24 +19,46 @@ int main(){
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);
     servaddr.sin_addr.s_addr = INADDR_ANY;
+    socklen_t addrlen = sizeof(servaddr);
+    Player myPlayer = {0};
+    Public myPdata = {.id = -1, .x = 10, .y = 20, .angle = 0};
 
-    const char* yuh = "HELLO SERVER :D";
-    socklen_t len = sizeof(servaddr);
-    sendto(clientFd, yuh, strlen(yuh), 0, (const struct sockaddr *)&servaddr, len);
-    int n = recvfrom(clientFd, buffer, BUFSIZ, 0, (struct sockaddr *)&servaddr, &len);
-    buffer[n] = '\0';
-    char buf[BUFSIZ];
-    printf("Server replied: %s\n", buffer);
-    while(fgets(buf, BUFSIZ, stdin) != NULL){
-	n = recvfrom(clientFd, buffer, BUFSIZ, 0, (struct sockaddr *)&servaddr, &len);
-       if(n>0){
-	   printf("%s", buffer);
-	   fflush(stdout);
-       }	   
-       sendto(clientFd, buf, strlen(buf), 0, (const struct sockaddr *)&servaddr, len);
-	
+    myPlayer.pdata = myPdata;
+    myPlayer.health = 100;
+    myPlayer.speed = 1.0;
+    send_message(clientFd, &servaddr, addrlen, CLIENT_UPDATE, sizeof(Player), (uint8_t*)&myPlayer, 0);
+
+    Message msg;
+    if(recieve_message(clientFd, &msg, &servaddr, &addrlen) == 0){
+	if (msg.operation == NEW_PLAYER) {
+	    printf("Got map data, here it is: %s", msg.data);
+	    myPlayer.pdata.id = msg.id;
+	    fflush(stdout);
+
+	}
+	free(msg.data);
     }
-    
+
+    for(int i = 0; i<5; i++) {
+	myPlayer.pdata.x += 1;
+	send_message(clientFd, &servaddr, addrlen,
+                     CLIENT_UPDATE, sizeof(Player),
+                     (uint8_t*)&myPlayer, myPlayer.pdata.id);
+	if (recieve_message(clientFd, &msg, &servaddr, &addrlen) == 0) {
+	    Public *players = (Public*)msg.data;
+	    int count = msg.dataSize/sizeof(Public);
+	    printf("Update: %d players online\n", count);
+	    for(int i = 0; i<count; i++){
+		printf("Player %d at (%d, %d)\n", players[i].id, players[i].x, players[i].y);
+	    }
+	}
+	free(msg.data);
+	sleep(1);
+    }
+
+    send_message(clientFd, &servaddr, addrlen,
+                 DISCONNECT, sizeof(Player),
+                 (uint8_t*)&myPlayer, myPlayer.pdata.id);
     close(clientFd);
     return 0;
 
