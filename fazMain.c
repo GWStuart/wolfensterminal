@@ -22,7 +22,7 @@
 #define TO_RAD(deg) (deg * (M_PI / 180.0f))
 #define TO_DEG(rad) (rad * (180.0f / M_PI))
 
-#define PORT 8080
+#define PORT 23107
 #define LOCALHOST "10.89.240.40"
 
 static volatile int running = 1;
@@ -137,7 +137,7 @@ int main()
     sprites[1].x = 2*64;
     sprites[1].y = 2*64;
     sprites[1].isAngled = false;
-    sprites[0].spriteType = S_GUY;
+    sprites[1].spriteType = S_GUY;
     sprites[2].x = 3*64;
     sprites[2].y = 5*64;
     sprites[2].isAngled = false;
@@ -281,7 +281,7 @@ int main()
             n = MAX_PLAYERS;
         }
 	if (n > nOld) {
-	    players = realloc(sprites, sizeof(Sprite) * n);
+	    players = realloc(players, sizeof(Sprite) * n);
 	}
 	nOld = n;
         memcpy(others, payload + sizeof(count), n*sizeof(Public));
