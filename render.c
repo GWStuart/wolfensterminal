@@ -193,7 +193,8 @@ void render_player(int x, int y, int column, int height) {
         num = texturePlayer[j][column];
 
         if (num == 0) {
-            character = ' ';
+            //character = ' ';
+	    continue;
         } else if (num == 1) {
             attron(COLOR_PAIR(13));
             character = '@';

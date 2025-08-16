@@ -241,12 +241,23 @@ float draw_all_stuff(int (*map)[10], Player_info* player, int cols, int rows, Sp
         }
 
         // Draw columns that pass the z-test
+	int totalCols = endCol - startCol;
         for (int col = startCol; col < endCol; col++) {
             // Depth test: sprite must be in front of wall slice
             if (spriteDist < zBuffer[col]) {
                 // Render a vertical slice of the sprite. Here we just reuse render_line as a solid column.
                 // If you later texture sprites, you’ll sample the correct column instead of drawing a solid.
-                render_line(col, startRow, spriteHeight, 'B', 1);
+                //render_line(col, startRow, spriteHeight, 'B', 1);
+		//render_player(col, startRow, col*(14.0f / (float)totalCols), spriteHeight);
+		int texW = 14;                      // your sprite texture width in columns (was hard-coded 14.0)
+		int rel = col - startCol;           // 0 .. totalCols-1
+		// Map 0..totalCols-1 -> 0..texW-1 with rounding & clamping
+		int texX = (int)roundf(rel * (texW - 1) / (float)(totalCols - 1));
+		if (texX < 0) texX = 0;
+		if (texX >= texW) texX = texW - 1;
+
+		render_player(col, startRow, texX, spriteHeight);
+
             }
         }
     }
