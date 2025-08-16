@@ -17,4 +17,4 @@ int main() {
     return 0;
 }
 
-//to compile gcc -o map_editor main.c map_editor.c render.c render.h -lm -lncurses
+//to compile gcc -o map_editor main.c map_editor.c render.c render.h -lm -lncurses. NOTE: I think render.h has been changed in main.
