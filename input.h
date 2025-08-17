@@ -20,6 +20,8 @@
 #define K_D 32
 #define K_Q 16
 #define K_E 18
+#define K_1 2
+#define K_2 3
 
 typedef struct {
     struct epoll_event ev, events[MAX_EVENTS];
@@ -38,6 +40,9 @@ typedef struct {
     bool right;
     bool tRight;
     bool tLeft;
+    bool pistol;
+    bool shotgun;
+    bool shoot;
     int mouseX;
 } Inputs;
 

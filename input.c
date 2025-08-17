@@ -112,6 +112,8 @@ void detect_input(InputDeviceStuff* iDS, Inputs* inputs)
                             case K_D: inputs->right   = true; break;
                             case K_Q: inputs->tLeft   = true; break;
                             case K_E: inputs->tRight  = true; break;
+			    case K_1: inputs->pistol  = true; break;
+			    case K_2: inputs->shotgun = true; break;
                         }
                     } else if (input_ev.value == 0) { // release
                         switch (input_ev.code) {
@@ -121,6 +123,8 @@ void detect_input(InputDeviceStuff* iDS, Inputs* inputs)
                             case K_D: inputs->right   = false; break;
                             case K_Q: inputs->tLeft   = false; break;
                             case K_E: inputs->tRight  = false; break;
+			    case K_1: inputs->pistol  = false; break;
+			    case K_2: inputs->shotgun = false; break;
                         }
                     } else if (input_ev.value == 2) {
                         // auto-repeat (ignore or handle separately if desired)

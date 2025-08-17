@@ -23,8 +23,8 @@
 #define TO_DEG(rad) (rad * (180.0f / M_PI))
 
 #define PORT 23107
-//#define LOCALHOST "10.89.240.40" //KART
-#define LOCALHOST "10.89.137.125" //FAZ
+#define LOCALHOST "10.89.240.40" //KART
+//#define LOCALHOST "10.89.137.125" //FAZ
 
 static volatile int running = 1;
 static void on_sigint(int sig) {
@@ -271,6 +271,14 @@ int main()
 	if (player.angle > 180) {
 	    player.angle = -180;
 	}
+    }
+
+    if (inputs.pistol && player.hasPistol) {
+	player.equipped = 1;
+    }
+
+    if (inputs.shotgun && player.hasShotgun) {
+	player.equipped = 2;
     }
 
     for (int i = 0; i < numSprites; i++) {
