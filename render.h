@@ -4,6 +4,8 @@
 #include <ncurses.h>
 #include <stdbool.h>
 
+#include "config.h"
+
 // does some ncurses setup
 // (see render.c for details)
 void setup_screen();
@@ -34,4 +36,5 @@ void render_player(int x, int y, int column, int height);
 
 void render_shotgun(int x, int y, int column, int height);
 
+void draw_hand_gun(Player_info* player, int rows, int cols);
 #endif

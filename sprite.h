@@ -13,6 +13,7 @@ typedef struct {int x;
     int angle;
     int distanceToPlayer;
     int spriteType;
+    bool isExist;
 } Sprite;
 
 #endif

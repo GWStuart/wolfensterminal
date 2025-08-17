@@ -1,6 +1,7 @@
 #ifndef WOLFENSTERMINAL_CONFIG_H
 #define WOLFENSTERMINAL_CONFIG_H
 
+#include <stdbool.h>
 /*
 Define all structs and things like that here.
 Makes things easier so that all files have access to this.
@@ -19,6 +20,9 @@ typedef struct{
     float angle;
     int curr_speed;
     int max_speed;
+    bool hasPistol;
+    bool hasShotgun;
+    int equipped;
 } Player_info;
 
 

@@ -23,7 +23,8 @@
 #define TO_DEG(rad) (rad * (180.0f / M_PI))
 
 #define PORT 23107
-#define LOCALHOST "10.89.240.40"
+//#define LOCALHOST "10.89.240.40" //KART
+#define LOCALHOST "10.89.137.125" //FAZ
 
 static volatile int running = 1;
 static void on_sigint(int sig) {
@@ -133,15 +134,21 @@ int main()
     sprites[0].x = 5*64;
     sprites[0].y = 3*64;
     sprites[0].isAngled = false;
+    sprites[0].isExist = true;
     sprites[0].spriteType = S_GUY;
+    sprites[0].distanceToPlayer = 50000;
     sprites[1].x = 2*64;
     sprites[1].y = 2*64;
     sprites[1].isAngled = false;
+    sprites[1].isExist = true;
     sprites[1].spriteType = S_GUY;
+    sprites[1].distanceToPlayer = 50000;
     sprites[2].x = 3*64;
     sprites[2].y = 5*64;
     sprites[2].isAngled = false;
+    sprites[2].isExist = true;
     sprites[2].spriteType = S_SGUN;
+    sprites[2].distanceToPlayer = 50000;
     InputDeviceStuff iDS = open_devices();
     Inputs inputs = {.forward = false,
 	.back = false,
@@ -160,7 +167,7 @@ int main()
     //init_pair(4, COLOR_BLUE, COLOR_BLACK);
     //init_pair(5, COLOR_WHITE, COLOR_BLACK);
 
-    Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .curr_speed = 0, .max_speed = 5};
+    Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .curr_speed = 0, .max_speed = 5, .hasPistol = true, .hasShotgun = false, .equipped = 1};
     //-90 is top
     //int map[10][10] = {
     //    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1}, 
@@ -186,6 +193,10 @@ int main()
 	float FOV_RAD = FOV * (M_PI / 180.0f);
 
 	sprites[0].x += 5;
+
+	for (int i = 0; i < numSprites; i++) {
+	    sprites[i].distanceToPlayer = dist(player.x, player.y, sprites[i].x, sprites[i].y, 0);
+	}
 
 	allSprites = realloc(allSprites, sizeof(Sprite) * (numSprites + n));
 
@@ -262,6 +273,17 @@ int main()
 	}
     }
 
+    for (int i = 0; i < numSprites; i++) {
+	if (sprites[i].isExist && sprites[i].spriteType == S_SGUN) {
+	    wmove(stdscr, 0, 0);
+	    printw("%d", sprites[i].distanceToPlayer);
+	    if (sprites[i].distanceToPlayer < 20) {
+		sprites[i].isExist = false;
+		player.hasShotgun = true;
+	    }
+	}
+    }
+
 
     memcpy(&myPlayer.pdata.x, &player.x, sizeof(int));
     memcpy(&myPlayer.pdata.y, &player.y, sizeof(int));
@@ -289,6 +311,7 @@ int main()
 	for (size_t i = 0; i < n; i++) {
 	    players[i].x = others[i].x;
 	    players[i].y = others[i].y;
+	    players[i].isExist = true;
 	    players[i].spriteType = S_GUY;
 	}
 

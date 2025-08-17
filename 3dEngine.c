@@ -183,6 +183,9 @@ float draw_all_stuff(int (*map)[20], Player_info* player, int cols, int rows, Sp
 
     for (int i = 0; i < numSprites; i++) {
         Sprite* s = &(*sprites)[i];
+	if (!s->isExist) {
+	    continue;
+	}
 
         // Vector from player to sprite
         float dx = (float)s->x - (float)player->x;
@@ -329,6 +332,8 @@ float draw_all_stuff(int (*map)[20], Player_info* player, int cols, int rows, Sp
             }
         }
     }
+
+    draw_hand_gun(player, rows, cols);
 
     return 0.0f; // function is declared float; return something (unused)
 }
