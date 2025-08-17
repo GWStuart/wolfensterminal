@@ -14,14 +14,17 @@
 #include <arpa/inet.h>
 #include "serverClient/protocol.h"
 #include <signal.h>
+
 #include <unistd.h>
 #include <math.h>
 #include <stdbool.h>
-#include <errno.h>
+
 #define TO_RAD(deg) (deg * (M_PI / 180.0f))
 #define TO_DEG(rad) (rad * (180.0f / M_PI))
 
 #define PORT 23107
+#define LOCALHOST "10.89.240.40" //KART
+//#define LOCALHOST "10.89.137.125" //FAZ
 
 static volatile int running = 1;
 static void on_sigint(int sig) {
@@ -69,19 +72,19 @@ static void on_sigint(int sig) {
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
-int main(int argc, char** argv)
+int main()
 {
+
     size_t n = 0;
     size_t nOld = 0;
     //bad code
     signal(SIGINT, on_sigint);
-    if(argc != 2) {
-	fprintf(stderr, "Usage: sudo ./wolfensterminal serverIP\n");
-	exit(-1);
-
-
-    }
-    char* hostIP = argv[1];
+    //int delay = 0;
+    //if(argc == 1){ //tempCode
+    //    delay = 200;
+    //} else {
+    //    delay = atoi(argv[1]);
+    //}
     int clientFd;
     struct sockaddr_in servaddr;
     clientFd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -92,11 +95,7 @@ int main(int argc, char** argv)
     }
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);
-    if(inet_pton(AF_INET, hostIP, &servaddr.sin_addr) <= 0){
-	perror("the ip was not in the correct format.");
-	return -1;
-	
-    };
+    inet_pton(AF_INET, LOCALHOST, &servaddr.sin_addr);
     socklen_t addrlen = sizeof(servaddr);
     Player myPlayer = {0};
     Public myPdata = {.id = -1, .x = 10, .y = 20, .angle = 0};
@@ -108,16 +107,10 @@ int main(int argc, char** argv)
 
     MessageHeader header;
     uint8_t payload[65507];
-    struct timeval tv; 
-    tv.tv_sec = 2;
-    tv.tv_usec = 0;
-    setsockopt(clientFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-
-
     int dataSize = recv_message(clientFd, &header, payload, sizeof(payload), &servaddr, &addrlen);
 
     if(dataSize <= 0 || header.operation != SERVER_WELCOME) {
-	fprintf(stderr, "this is not the correct server: go away\n");
+	fprintf(stderr, "the server said bumass: go away\n");
 	return 1;
     }
     WelcomePayload message;
@@ -290,6 +283,8 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < numSprites; i++) {
 	if (sprites[i].isExist && sprites[i].spriteType == S_SGUN) {
+	    wmove(stdscr, 0, 0);
+	    printw("%d", sprites[i].distanceToPlayer);
 	    if (sprites[i].distanceToPlayer < 20) {
 		sprites[i].isExist = false;
 		player.hasShotgun = true;
@@ -308,15 +303,6 @@ int main(int argc, char** argv)
     struct sockaddr_in from;
     socklen_t flen = sizeof(from);
     int r = recv_message(clientFd, &snapshot, payload, sizeof(payload), &from, &flen);
-    if(r < 0){
-	if(errno == EWOULDBLOCK || errno == EAGAIN){
-	    fprintf(stderr, "server thinks you're a bum. either:\n"
-		"1. the ip you just inputted was bad\n"
-		"2. server closed\n");
-	    running = 0;
-       }
-   }
- 
     if(r > 0 && snapshot.operation == SERVER_SNAPSHOT){
         uint16_t count = 0;
         memcpy(&count, payload, sizeof(count));
