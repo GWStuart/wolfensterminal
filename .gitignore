@@ -6,4 +6,6 @@ test
 MakefileTesting
 test.c
 logs/*
-
+wolfensterminal
+serverClient/wolfclient
+serverClient/wolfserver
