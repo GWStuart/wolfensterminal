@@ -1,7 +1,3 @@
-//compile with:
-//gcc -o fazMain fazMain.c 3dEngine.c render.c input.c player_info.c debug/debug.c -lm -lncurses
-
-
 #include "3dEngine.h"
 #include "render.h"
 #include "input.h"
@@ -14,17 +10,14 @@
 #include <arpa/inet.h>
 #include "serverClient/protocol.h"
 #include <signal.h>
-
 #include <unistd.h>
 #include <math.h>
 #include <stdbool.h>
-
+#include <errno.h>
 #define TO_RAD(deg) (deg * (M_PI / 180.0f))
 #define TO_DEG(rad) (rad * (180.0f / M_PI))
 
 #define PORT 23107
-#define LOCALHOST "10.89.240.40" //KART
-//#define LOCALHOST "10.89.137.125" //FAZ
 
 static volatile int running = 1;
 static void on_sigint(int sig) {
@@ -34,19 +27,6 @@ static void on_sigint(int sig) {
     running = 0;
 
 }
-
-    //int map[10][10] = {
-    //    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 
-    //    {2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
-    //    {2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
-    //    {2, 0, 0, 4, 0, 0, 0, 0, 0, 4}, 
-    //    {2, 0, 0, 0, 0, 0, 2, 2, 2, 4}, 
-    //    {2, 0, 0, 0, 0, 0, 3, 0, 0, 4}, 
-    //    {2, 1, 1, 1, 0, 0, 3, 0, 0, 4}, 
-    //    {2, 0, 0, 0, 0, 0, 3, 0, 0, 4}, 
-    //    {2, 0, 0, 0, 0, 0, 0, 0, 0, 4}, 
-    //    {3, 3, 3, 3, 3, 3, 3, 3, 3, 3}
-    //};
 
 
     int map[20][20] = {
@@ -72,19 +52,18 @@ static void on_sigint(int sig) {
 	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
     };
 
-int main()
+int main(int argc, char** argv)
 {
-
     size_t n = 0;
     size_t nOld = 0;
-    //bad code
     signal(SIGINT, on_sigint);
-    //int delay = 0;
-    //if(argc == 1){ //tempCode
-    //    delay = 200;
-    //} else {
-    //    delay = atoi(argv[1]);
-    //}
+    if(argc != 2) {
+	fprintf(stderr, "Usage: sudo ./wolfensterminal serverIP\n");
+	exit(-1);
+
+
+    }
+    char* hostIP = argv[1];
     int clientFd;
     struct sockaddr_in servaddr;
     clientFd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -95,7 +74,11 @@ int main()
     }
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(PORT);
-    inet_pton(AF_INET, LOCALHOST, &servaddr.sin_addr);
+    if(inet_pton(AF_INET, hostIP, &servaddr.sin_addr) <= 0){
+	perror("the ip was not in the correct format.");
+	return -1;
+	
+    };
     socklen_t addrlen = sizeof(servaddr);
     Player myPlayer = {0};
     Public myPdata = {.id = -1, .x = 10, .y = 20, .angle = 0};
@@ -107,10 +90,16 @@ int main()
 
     MessageHeader header;
     uint8_t payload[65507];
+    struct timeval tv; 
+    tv.tv_sec = 2;
+    tv.tv_usec = 0;
+    setsockopt(clientFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+
     int dataSize = recv_message(clientFd, &header, payload, sizeof(payload), &servaddr, &addrlen);
 
     if(dataSize <= 0 || header.operation != SERVER_WELCOME) {
-	fprintf(stderr, "the server said bumass: go away\n");
+	fprintf(stderr, "this is not the correct server: go away\n");
 	return 1;
     }
     WelcomePayload message;
@@ -122,10 +111,6 @@ int main()
    Public others[MAX_PLAYERS];
 
 
-
-
-
-    //NEED TO MAKE THIS CODE NOT HARD CODED AND ACTUALLY WORK FOR ALL SCENARIOS
     debug_init();
     int numSprites = 3;
     Sprite* sprites = malloc(sizeof(Sprite) * numSprites);
@@ -161,29 +146,9 @@ int main()
     clear_screen();
     start_color();
 
-    //init_pair(1, COLOR_RED, COLOR_BLACK);
-    //init_pair(2, COLOR_GREEN, COLOR_BLACK);
-    //init_pair(3, COLOR_YELLOW, COLOR_BLACK);
-    //init_pair(4, COLOR_BLUE, COLOR_BLACK);
-    //init_pair(5, COLOR_WHITE, COLOR_BLACK);
-
     Player_info player = {.x = 5*64, .y = 5*64, .angle = -90, .curr_speed = 0, .max_speed = 5, .hasPistol = true, .hasShotgun = false, .equipped = 1};
-    //-90 is top
-    //int map[10][10] = {
-    //    {0, 0, 0, 0, 1, 1, 1, 1, 1, 1}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 1}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, 
-    //    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-    //};
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
-    //wmove(stdscr, 0, 0);
     while (running) {
 	getmaxyx(stdscr, rows, cols);
 
@@ -207,21 +172,11 @@ int main()
 	    allSprites[i] = players[i - (size_t)numSprites];
 	}
 
-	draw_all_stuff(map, &player, cols, rows, &allSprites, numSprites + (int)n);  // Pass exact screen column
+	draw_all_stuff(map, &player, cols, rows, &allSprites, numSprites + (int)n);
 
 
-//
-//    for (int i = cols/2; i > -cols/2; i -= cols/70) {
-//	cast_ray(map, &player, player.angle + i);
-//    }
-    //for (int i = -cols/2; i < cols/2; i++) {
-    //    cast_ray(map, &player, player.angle + i);
-    //}
     refresh();
-    //player.angle++;
-    //inputs.mouseX = 0;
     detect_input(&iDS, &inputs);
-    //debug_print("mouseX: %d\n", inputs.mouseX);
     player.angle += inputs.mouseX; //UNCOMMENT IF MOUSE IS WORKING AS INTENDED
     if (player.angle < -180) {
 	player.angle += 360;
@@ -229,11 +184,8 @@ int main()
 	player.angle -= 360;
     }
     inputs.mouseX = 0;
-    //acceleration(&player, &inputs);
     
     if (inputs.forward) {
-	//player.x += 5*cos(TO_RAD(player.angle));
-	//player.y += 5*sin(TO_RAD(player.angle));
 	if (map[((player.y + (int)(20*sin(TO_RAD(player.angle)))) >> 6)][((player.x + (int)(20*cos(TO_RAD(player.angle)))) >> 6)] == 0) {
 	    player.x += 5*cos(TO_RAD(player.angle));
 	    player.y += 5*sin(TO_RAD(player.angle));
@@ -283,8 +235,6 @@ int main()
 
     for (int i = 0; i < numSprites; i++) {
 	if (sprites[i].isExist && sprites[i].spriteType == S_SGUN) {
-	    wmove(stdscr, 0, 0);
-	    printw("%d", sprites[i].distanceToPlayer);
 	    if (sprites[i].distanceToPlayer < 20) {
 		sprites[i].isExist = false;
 		player.hasShotgun = true;
@@ -303,6 +253,15 @@ int main()
     struct sockaddr_in from;
     socklen_t flen = sizeof(from);
     int r = recv_message(clientFd, &snapshot, payload, sizeof(payload), &from, &flen);
+    if(r < 0){
+	if(errno == EWOULDBLOCK || errno == EAGAIN){
+	    fprintf(stderr, "server thinks you're a bum. either:\n"
+		"1. the ip you just inputted was bad\n"
+		"2. server closed\n");
+	    running = 0;
+       }
+   }
+ 
     if(r > 0 && snapshot.operation == SERVER_SNAPSHOT){
         uint16_t count = 0;
         memcpy(&count, payload, sizeof(count));
@@ -323,27 +282,12 @@ int main()
 	    players[i].spriteType = S_GUY;
 	}
 
-        //for(size_t i = 0; i<n; i++) {
-        //    printf(" [id=%u x=%d y=%d a=%.2f]", others[i].id, others[i].x, others[i].y, others[i].angle);
-        //}
-        //if(n != 0){
-
-        //    printf("\n");
-
-        //}
-        // if(n == 0 && !funnyCheck) {
-        //    printf("lonely ahh bum ahh client\n");
-        //    funnyCheck++;
-        //    }
         }
 
-    //usleep(delay*1000);
     
 
     refresh();
     napms(16);
-	//player.y--;
-	//sleep(1);
     }
     send_message(clientFd, &servaddr, addrlen, CLIENT_DISCONNECT, myPlayer.pdata.id, &myPlayer, sizeof(Player));
     close(clientFd);
