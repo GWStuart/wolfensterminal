@@ -1,6 +1,7 @@
 # WolfensTerminal
 A 3D terminal-based raycaster with multiplayer support.
-<img width="1852" height="984" alt="image" src="https://github.com/user-attachments/assets/4212898f-b969-4fe9-a424-663da72fd180" />
+
+<img width="1312" height="883" alt="image" src="https://github.com/user-attachments/assets/bfe37164-0d01-45bb-860d-325b6ecb6db9" />
 
 ## Features
 - Fully run from within a terminal
