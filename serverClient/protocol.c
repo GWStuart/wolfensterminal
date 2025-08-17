@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <errno.h>
 #include "protocol.h"
 #include <string.h>
 #include <unistd.h>
@@ -45,6 +46,7 @@ int recv_message(int sockFD, MessageHeader *header, uint8_t *buffer, size_t buff
                  struct sockaddr_in *from, socklen_t *fromlen)
 {
     uint8_t infoBytes[sizeof(MessageHeader)];
+    //timeout code
     ssize_t got = recvfrom(sockFD, infoBytes, sizeof(infoBytes), MSG_PEEK,
                            (struct sockaddr*)from, fromlen);
     if (got < (ssize_t)sizeof(MessageHeader)){
