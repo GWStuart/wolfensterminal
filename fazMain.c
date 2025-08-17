@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     MessageHeader header;
     uint8_t payload[65507];
     struct timeval tv; 
-    tv.tv_sec = 2;
+    tv.tv_sec = 20;
     tv.tv_usec = 0;
     setsockopt(clientFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
