@@ -15,6 +15,9 @@ As per the rules of the hackathon, this entire project was completed in 48 hours
 - Dynamically adjusts to terminal screen sizes effectively supporting varied resolutions
 - Basic map editor
 
+## Demo
+Want to checkout the program without actually running it yourself? I recorded a basic demo that shows off the main functionality. Check it out [here](https://www.youtube.com/watch?v=S64v6coJ--w).
+
 ## Running the program
 This project was built entierly using C and is designed to be run on any Linux terminal or terminal emulator. There are two main components,
 
